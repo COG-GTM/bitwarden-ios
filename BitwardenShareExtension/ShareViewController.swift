@@ -15,6 +15,13 @@ class ShareViewController: UIViewController {
     /// The app's theme.
     var appTheme: AppTheme = .default
 
+    /// The app's text size.
+    var textSize: TextSize = .default {
+        didSet {
+            applyTextSize(textSize)
+        }
+    }
+
     var authCompletionRoute: AppRoute? = .sendItem(.add(content: nil))
 
     /// The processor that manages application level logic.

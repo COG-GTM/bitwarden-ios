@@ -146,6 +146,12 @@ public class AppProcessor {
             }
         }
 
+        Task {
+            for await textSize in await services.stateService.textSizePublisher().values {
+                navigator.textSize = textSize
+            }
+        }
+
         await services.flightRecorder.log(
             "App launched, context: \(appContext), version: \(Bundle.main.appVersion) (\(Bundle.main.buildNumber))",
         )

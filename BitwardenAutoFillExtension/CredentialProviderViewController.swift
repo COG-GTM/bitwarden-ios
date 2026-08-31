@@ -13,6 +13,13 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     /// The app's theme.
     var appTheme: AppTheme = .default
 
+    /// The app's text size.
+    var textSize: TextSize = .default {
+        didSet {
+            applyTextSize(textSize)
+        }
+    }
+
     /// A subject containing whether the controller did appear.
     private var didAppearSubject = CurrentValueSubject<Bool, Never>(false)
 

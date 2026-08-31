@@ -9,6 +9,9 @@ public protocol RootNavigator: Navigator {
     /// The app's theme.
     var appTheme: AppTheme { get set }
 
+    /// The app's text size.
+    var textSize: TextSize { get set }
+
     /// Shows the specified child navigator.
     ///
     /// - Parameter child: The navigator to show.

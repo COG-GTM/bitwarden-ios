@@ -1093,3 +1093,8 @@
 "CheckYourConnectionAndTryAgain" = "Check your connection and try again.";
 "PricingUnavailable" = "Pricing unavailable";
 "BankAccount" = "Bank account";
+"TextSize" = "Text size";
+"TextSizeDescription" = "Make text throughout the app larger and easier to read.";
+"Large" = "Large";
+"Larger" = "Larger";
+"Largest" = "Largest";

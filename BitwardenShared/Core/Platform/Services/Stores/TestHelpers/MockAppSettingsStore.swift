@@ -74,6 +74,8 @@ class MockAppSettingsStore: AppSettingsStore { // swiftlint:disable:this type_bo
         }
     }
 
+    var textSize: String?
+
     var unsuccessfulUnlockAttempts = [String: Int]()
     var usernameGenerationOptions = [String: UsernameGenerationOptions]()
 

@@ -1,6 +1,7 @@
-import BitwardenKit
 import BitwardenKitMocks
 import XCTest
+
+@testable import BitwardenKit
 
 // MARK: - RootViewControllerTests
 
@@ -75,6 +76,36 @@ class RootViewControllerTests: BitwardenTestCase {
 
         subject.appTheme = .light
         XCTAssertEqual(subject.preferredStatusBarStyle, .darkContent)
+    }
+
+    /// `applyCurrentTextSize` applies the selected text size when it is larger than the system text size.
+    @available(iOS 17.0, *)
+    func test_applyCurrentTextSize_selectedTextSizeLargerThanSystem() {
+        subject.textSize = .large
+        subject.applyCurrentTextSize(systemContentSizeCategory: .large)
+
+        XCTAssertEqual(subject.traitOverrides.preferredContentSizeCategory, .extraLarge)
+    }
+
+    /// `applyCurrentTextSize` removes the override when the system text size is larger than the selected text size.
+    @available(iOS 17.0, *)
+    func test_applyCurrentTextSize_systemTextSizeLargerThanSelected() {
+        subject.textSize = .large
+        subject.applyCurrentTextSize(systemContentSizeCategory: .accessibilityMedium)
+
+        XCTAssertFalse(subject.traitOverrides.contains(UITraitPreferredContentSizeCategory.self))
+    }
+
+    /// `applyCurrentTextSize` removes the override when the system text size increases.
+    @available(iOS 17.0, *)
+    func test_applyCurrentTextSize_systemTextSizeChanged() {
+        subject.textSize = .large
+        subject.applyCurrentTextSize(systemContentSizeCategory: .large)
+        XCTAssertEqual(subject.traitOverrides.preferredContentSizeCategory, .extraLarge)
+
+        subject.applyCurrentTextSize(systemContentSizeCategory: .accessibilityMedium)
+
+        XCTAssertFalse(subject.traitOverrides.contains(UITraitPreferredContentSizeCategory.self))
     }
 
     /// `rootViewController` returns itself, instead of the current `childViewController`.

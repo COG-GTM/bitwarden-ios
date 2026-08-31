@@ -55,12 +55,14 @@ class AppearanceProcessorTests: BitwardenTestCase {
         XCTAssertEqual(subject.state.appTheme, .default)
         stateService.appLanguage = .custom(languageCode: "de")
         stateService.appTheme = .light
+        stateService.textSize = .larger
         stateService.showWebIcons = false
 
         await subject.perform(.loadData)
 
         XCTAssertEqual(subject.state.currentLanguage, .custom(languageCode: "de"))
         XCTAssertEqual(subject.state.appTheme, .light)
+        XCTAssertEqual(subject.state.textSize, .larger)
         XCTAssertFalse(subject.state.isShowWebsiteIconsToggleOn)
     }
 
@@ -76,6 +78,15 @@ class AppearanceProcessorTests: BitwardenTestCase {
 
         XCTAssertEqual(subject.state.appTheme, .light)
         waitFor(stateService.appTheme == .light)
+    }
+
+    /// `receive(_:)` with `.textSizeChanged` updates the text size.
+    @MainActor
+    func test_receive_textSizeChanged() {
+        subject.receive(.textSizeChanged(.largest))
+
+        XCTAssertEqual(subject.state.textSize, .largest)
+        waitFor(stateService.textSize == .largest)
     }
 
     /// `receive(_:)` with `.languageTapped` navigates to the select language view.

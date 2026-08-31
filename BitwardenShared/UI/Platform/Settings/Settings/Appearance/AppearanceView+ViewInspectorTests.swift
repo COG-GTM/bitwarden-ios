@@ -43,6 +43,15 @@ class AppearanceViewTests: BitwardenTestCase {
         XCTAssertEqual(processor.dispatchedActions.last, .appThemeChanged(.dark))
     }
 
+    /// Updating the value of the text size sends the `.textSizeChanged()` action.
+    @MainActor
+    func test_textSizeChanged_updateValue() throws {
+        processor.state.textSize = .large
+        let menuField = try subject.inspect().find(bitwardenMenuField: Localizations.textSize)
+        try menuField.select(newValue: TextSize.largest)
+        XCTAssertEqual(processor.dispatchedActions.last, .textSizeChanged(.largest))
+    }
+
     /// Tapping the language button dispatches the `.languageTapped` action.
     @MainActor
     func test_languageButton_tap() throws {

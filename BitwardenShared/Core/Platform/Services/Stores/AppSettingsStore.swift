@@ -73,6 +73,9 @@ protocol AppSettingsStore: AnyObject {
     /// The app's account state.
     var state: State? { get set }
 
+    /// The app's text size.
+    var textSize: String? { get set }
+
     /// The user's access token expiration date.
     ///
     /// - Parameter userId: The user ID associated with the access token expiration date.
@@ -806,6 +809,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case siriAndShortcutsAccess(userId: String)
         case syncToAuthenticator(userId: String)
         case state
+        case textSize
         case twoFactorToken(email: String)
         case usernameGenerationOptions(userId: String)
         case usesKeyConnector(userId: String)
@@ -922,6 +926,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "siriAndShortcutsAccess_\(userId)"
             case let .syncToAuthenticator(userId):
                 "shouldSyncToAuthenticator_\(userId)"
+            case .textSize:
+                "textSize"
             case let .twoFactorToken(email):
                 "twoFactorToken_\(email)"
             case let .usernameGenerationOptions(userId):
@@ -1035,6 +1041,11 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
             activeAccountIdSubject.send(newValue?.activeUserId)
             return store(newValue, for: .state)
         }
+    }
+
+    var textSize: String? {
+        get { fetch(for: .textSize) }
+        set { store(newValue, for: .textSize) }
     }
 
     func accessTokenExpirationDate(userId: String) -> Date? {

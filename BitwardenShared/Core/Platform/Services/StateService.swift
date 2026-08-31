@@ -352,6 +352,12 @@ protocol StateService: AnyObject, BillingStateService {
     ///
     func getTimeoutAction(userId: String?) async throws -> SessionTimeoutAction
 
+    /// Get the app text size.
+    ///
+    /// - Returns: The app text size.
+    ///
+    func getTextSize() async -> TextSize
+
     /// Get the two-factor token (non-nil if the user selected the "remember me" option).
     ///
     /// - Parameter email: The user's email address.
@@ -759,6 +765,12 @@ protocol StateService: AnyObject, BillingStateService {
     ///
     func setTimeoutAction(action: SessionTimeoutAction, userId: String?) async throws
 
+    /// Sets the app text size.
+    ///
+    /// - Parameter textSize: The new app text size.
+    ///
+    func setTextSize(_ textSize: TextSize) async
+
     /// Sets the user's two-factor token.
     ///
     /// - Parameters:
@@ -846,6 +858,12 @@ protocol StateService: AnyObject, BillingStateService {
     /// - Returns: A publisher for the sync to authenticator value.
     ///
     func syncToAuthenticatorPublisher() async -> AnyPublisher<(String?, Bool), Never>
+
+    /// A publisher for the app text size.
+    ///
+    /// - Returns: A publisher for the app text size.
+    ///
+    func textSizePublisher() async -> AnyPublisher<TextSize, Never>
 }
 
 extension StateService {
@@ -1464,6 +1482,9 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     /// A subject containing the sync to authenticator value.
     private var syncToAuthenticatorByUserIdSubject = CurrentValueSubject<[String: Bool], Never>([:])
 
+    /// A subject containing the app text size.
+    private var textSizeSubject: CurrentValueSubject<TextSize, Never>
+
     // MARK: Initialization
 
     /// Initialize a `DefaultStateService`.
@@ -1493,6 +1514,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
 
         appThemeSubject = CurrentValueSubject(AppTheme(appSettingsStore.appTheme))
         showWebIconsSubject = CurrentValueSubject(!appSettingsStore.disableWebIcons)
+        textSizeSubject = CurrentValueSubject(TextSize(appSettingsStore.textSize))
 
         Task {
             for await activeUserId in await self.appSettingsStore.activeAccountIdPublisher().values {
@@ -1793,6 +1815,10 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
             return .lock
         }
         return timeoutAction
+    }
+
+    func getTextSize() async -> TextSize {
+        TextSize(appSettingsStore.textSize)
     }
 
     func getTwoFactorToken(email: String) async -> String? {
@@ -2187,6 +2213,11 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         appSettingsStore.setTimeoutAction(key: action, userId: userId)
     }
 
+    func setTextSize(_ textSize: TextSize) async {
+        appSettingsStore.textSize = textSize.value
+        textSizeSubject.send(textSize)
+    }
+
     func setTwoFactorToken(_ token: String?, email: String) async {
         appSettingsStore.setTwoFactorToken(token, email: email)
     }
@@ -2291,6 +2322,10 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
             }
         }
         .eraseToAnyPublisher()
+    }
+
+    func textSizePublisher() async -> AnyPublisher<TextSize, Never> {
+        textSizeSubject.eraseToAnyPublisher()
     }
 
     // MARK: Private

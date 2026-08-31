@@ -112,6 +112,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     var syncToAuthenticatorByUserId = [String: Bool]()
     var syncToAuthenticatorResult: Result<Void, Error> = .success(())
     var syncToAuthenticatorSubject = CurrentValueSubject<(String?, Bool), Never>((nil, false))
+    var textSize: TextSize?
     var twoFactorTokens = [String: String]()
     var updateProfileResponse: ProfileResponseModel?
     var updateProfileUserId: String?
@@ -123,6 +124,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
 
     lazy var activeIdSubject = CurrentValueSubject<String?, Never>(self.activeAccount?.profile.userId)
     lazy var appThemeSubject = CurrentValueSubject<AppTheme, Never>(self.appTheme ?? .default)
+    lazy var textSizeSubject = CurrentValueSubject<TextSize, Never>(self.textSize ?? .default)
 
     func addAccount(_ account: Account) async {
         accountsAdded.append(account)
@@ -415,6 +417,10 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     func getTimeoutAction(userId: String?) async throws -> SessionTimeoutAction {
         let userId = try unwrapUserId(userId)
         return timeoutAction[userId] ?? .lock
+    }
+
+    func getTextSize() async -> TextSize {
+        textSize ?? .default
     }
 
     func getTwoFactorToken(email: String) async -> String? {
@@ -776,6 +782,10 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
         timeoutAction[userId] = action
     }
 
+    func setTextSize(_ textSize: TextSize) async {
+        self.textSize = textSize
+    }
+
     func setTokens(accessToken: String, refreshToken: String, userId _: String?) async throws {
         accountTokens = Account.AccountTokens(accessToken: accessToken, refreshToken: refreshToken)
     }
@@ -864,6 +874,10 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
 
     func syncToAuthenticatorPublisher() async -> AnyPublisher<(String?, Bool), Never> {
         syncToAuthenticatorSubject.eraseToAnyPublisher()
+    }
+
+    func textSizePublisher() async -> AnyPublisher<TextSize, Never> {
+        textSizeSubject.eraseToAnyPublisher()
     }
 }
 

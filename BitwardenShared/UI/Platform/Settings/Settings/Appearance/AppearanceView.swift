@@ -21,6 +21,8 @@ struct AppearanceView: View {
         VStack(spacing: 8) {
             language
 
+            textSize
+
             theme
 
             webSiteIconsToggle
@@ -52,6 +54,20 @@ struct AppearanceView: View {
                     .imageStyle(.rowIcon)
             }
         }
+    }
+
+    /// The application's text size picker view
+    private var textSize: some View {
+        BitwardenMenuField(
+            title: Localizations.textSize,
+            footer: Localizations.textSizeDescription,
+            accessibilityIdentifier: "TextSizeChooser",
+            options: TextSize.allCases,
+            selection: store.binding(
+                get: \.textSize,
+                send: AppearanceAction.textSizeChanged,
+            ),
+        )
     }
 
     /// The application's color theme picker view

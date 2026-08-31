@@ -45,6 +45,7 @@ final class AppearanceProcessor: StateProcessor<AppearanceState, AppearanceActio
         case .loadData:
             state.currentLanguage = services.stateService.appLanguage
             state.appTheme = await services.stateService.getAppTheme()
+            state.textSize = await services.stateService.getTextSize()
             state.isShowWebsiteIconsToggleOn = await services.stateService.getShowWebIcons()
         }
     }
@@ -58,6 +59,11 @@ final class AppearanceProcessor: StateProcessor<AppearanceState, AppearanceActio
             }
         case .languageTapped:
             coordinator.navigate(to: .selectLanguage(currentLanguage: state.currentLanguage), context: self)
+        case let .textSizeChanged(textSize):
+            state.textSize = textSize
+            Task {
+                await services.stateService.setTextSize(textSize)
+            }
         case let .toggleShowWebsiteIcons(isOn):
             state.isShowWebsiteIconsToggleOn = isOn
             Task {

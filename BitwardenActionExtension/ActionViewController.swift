@@ -10,6 +10,13 @@ class ActionViewController: UIViewController {
     /// The app's theme.
     var appTheme: AppTheme = .default
 
+    /// The app's text size.
+    var textSize: TextSize = .default {
+        didSet {
+            applyTextSize(textSize)
+        }
+    }
+
     /// The processor that manages application level logic.
     private var appProcessor: AppProcessor?
 

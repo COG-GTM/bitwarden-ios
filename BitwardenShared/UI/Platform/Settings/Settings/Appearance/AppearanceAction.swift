@@ -11,6 +11,9 @@ enum AppearanceAction: Equatable {
     /// The language option was tapped.
     case languageTapped
 
+    /// The text size was changed.
+    case textSizeChanged(TextSize)
+
     /// Show website icons was toggled.
     case toggleShowWebsiteIcons(Bool)
 }

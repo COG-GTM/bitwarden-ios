@@ -138,6 +138,32 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertEqual(publishedValues, [.default, .dark])
     }
 
+    /// `textSize` gets and sets the value as expected.
+    func test_textSize() async {
+        // Getting the value should get the value from the app settings store.
+        appSettingsStore.textSize = "large"
+        let textSize = await subject.getTextSize()
+        XCTAssertEqual(textSize, .large)
+
+        // Setting the value should update the value in the app settings store.
+        await subject.setTextSize(.largest)
+        XCTAssertEqual(appSettingsStore.textSize, "largest")
+    }
+
+    /// `textSizePublisher()` returns a publisher for the app's text size.
+    func test_textSizePublisher() async {
+        var publishedValues = [TextSize]()
+        let publisher = await subject.textSizePublisher()
+            .sink(receiveValue: { textSize in
+                publishedValues.append(textSize)
+            })
+        defer { publisher.cancel() }
+
+        await subject.setTextSize(.larger)
+
+        XCTAssertEqual(publishedValues, [.default, .larger])
+    }
+
     /// `clearPins()` clears the user's pins.
     func test_clearPins() async throws {
         let account = Account.fixture()

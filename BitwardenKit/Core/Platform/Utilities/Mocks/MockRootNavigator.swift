@@ -26,6 +26,11 @@ public final class MockRootNavigator: RootNavigator {
     /// Defaults to `.default` and can be modified to test theme-related behavior.
     public var appTheme: AppTheme = .default
 
+    /// The current text size being used by the navigator.
+    ///
+    /// Defaults to `.default` and can be modified to test text size-related behavior.
+    public var textSize: TextSize = .default
+
     /// The most recently shown child navigator, if any.
     ///
     /// This property captures the navigator passed to the `show(child:)` method,

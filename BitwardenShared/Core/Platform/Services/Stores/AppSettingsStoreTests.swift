@@ -300,6 +300,22 @@ class AppSettingsStoreTests: BitwardenTestCase { // swiftlint:disable:this type_
         XCTAssertNil(userDefaults.string(forKey: "bwPreferencesStorage:theme"))
     }
 
+    /// `textSize` returns `nil` if there isn't a previously stored value.
+    func test_textSize_isInitiallyNil() {
+        XCTAssertNil(subject.textSize)
+    }
+
+    /// `textSize` can be used to get and set the persisted value in user defaults.
+    func test_textSize_withValue() {
+        subject.textSize = "large"
+        XCTAssertEqual(subject.textSize, "large")
+        XCTAssertEqual(userDefaults.string(forKey: "bwPreferencesStorage:textSize"), "large")
+
+        subject.textSize = nil
+        XCTAssertNil(subject.textSize)
+        XCTAssertNil(userDefaults.string(forKey: "bwPreferencesStorage:textSize"))
+    }
+
     /// `archiveOnboardingShown` returns `false` if there isn't a previously stored value.
     func test_archiveOnboardingShown_isInitiallyFalse() {
         XCTAssertFalse(subject.archiveOnboardingShown)

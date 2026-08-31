@@ -9,7 +9,17 @@ public class RootViewController: UIViewController {
     /// The app's theme.
     public var appTheme: AppTheme = .default
 
+    /// The app's text size.
+    public var textSize: TextSize = .default {
+        didSet {
+            applyCurrentTextSize()
+        }
+    }
+
     // MARK: Properties
+
+    /// Whether the text size is currently being applied.
+    private var isApplyingTextSize = false
 
     /// The child view controller currently being displayed within this root view controller.
     ///
@@ -30,7 +40,49 @@ public class RootViewController: UIViewController {
                 addChild(toViewController)
                 view.addConstrained(subview: toViewController.view)
                 toViewController.didMove(toParent: self)
+                applyCurrentTextSize()
             }
         }
+    }
+
+    // MARK: View Lifecycle
+
+    override public func viewDidLoad() {
+        super.viewDidLoad()
+
+        if #available(iOS 17.0, *) {
+            if let windowScene = view.window?.windowScene {
+                windowScene.registerForTraitChanges(
+                    [UITraitPreferredContentSizeCategory.self],
+                ) { [weak self] (_: any UITraitEnvironment, _: UITraitCollection) in
+                    self?.applyCurrentTextSize()
+                }
+            } else {
+                registerForTraitChanges(
+                    [UITraitPreferredContentSizeCategory.self],
+                ) { [weak self] (_: any UITraitEnvironment, _: UITraitCollection) in
+                    self?.applyCurrentTextSize()
+                }
+            }
+        }
+    }
+
+    override public func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+
+        if #unavailable(iOS 17.0) {
+            applyCurrentTextSize()
+        }
+    }
+
+    // MARK: Private
+
+    /// Reapplies the current text size, guarding against trait change recursion.
+    private func applyCurrentTextSize() {
+        guard !isApplyingTextSize else { return }
+
+        isApplyingTextSize = true
+        applyTextSize(textSize)
+        isApplyingTextSize = false
     }
 }

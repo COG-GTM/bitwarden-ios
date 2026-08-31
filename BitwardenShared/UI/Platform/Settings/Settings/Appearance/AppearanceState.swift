@@ -8,6 +8,9 @@ struct AppearanceState {
     /// The selected app theme.
     var appTheme: AppTheme = .default
 
+    /// The selected app text size.
+    var textSize: TextSize = .default
+
     /// Whether or not the show website icons toggle is on.
     var isShowWebsiteIconsToggleOn: Bool = false
 

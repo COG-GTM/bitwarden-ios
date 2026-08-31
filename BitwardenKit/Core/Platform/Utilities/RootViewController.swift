@@ -21,6 +21,12 @@ public class RootViewController: UIViewController {
     /// Whether the text size is currently being applied.
     private var isApplyingTextSize = false
 
+    /// The registration for preferred content size category trait changes.
+    private var traitChangeRegistration: AnyObject?
+
+    /// The window scene associated with the preferred content size category trait change registration.
+    private weak var traitChangeRegistrationScene: UIWindowScene?
+
     /// The child view controller currently being displayed within this root view controller.
     ///
     /// Setting this value will remove the previously displayed view controller and immediately replace it with
@@ -47,23 +53,11 @@ public class RootViewController: UIViewController {
 
     // MARK: View Lifecycle
 
-    override public func viewDidLoad() {
-        super.viewDidLoad()
+    override public func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
 
         if #available(iOS 17.0, *) {
-            if let windowScene = view.window?.windowScene {
-                windowScene.registerForTraitChanges(
-                    [UITraitPreferredContentSizeCategory.self],
-                ) { [weak self] (_: any UITraitEnvironment, _: UITraitCollection) in
-                    self?.applyCurrentTextSize()
-                }
-            } else {
-                registerForTraitChanges(
-                    [UITraitPreferredContentSizeCategory.self],
-                ) { [weak self] (_: any UITraitEnvironment, _: UITraitCollection) in
-                    self?.applyCurrentTextSize()
-                }
-            }
+            registerForTraitChangesIfNeeded()
         }
     }
 
@@ -77,12 +71,49 @@ public class RootViewController: UIViewController {
 
     // MARK: Private
 
+    /// Registers for preferred content size category trait changes once the view is attached to a window.
+    @available(iOS 17.0, *)
+    private func registerForTraitChangesIfNeeded() {
+        if let windowScene = view.window?.windowScene {
+            guard traitChangeRegistrationScene !== windowScene else { return }
+
+            if let traitChangeRegistration = traitChangeRegistration as? any UITraitChangeRegistration {
+                if let traitChangeRegistrationScene {
+                    traitChangeRegistrationScene.unregisterForTraitChanges(traitChangeRegistration)
+                } else {
+                    unregisterForTraitChanges(traitChangeRegistration)
+                }
+            }
+
+            traitChangeRegistration = windowScene.registerForTraitChanges(
+                [UITraitPreferredContentSizeCategory.self],
+            ) { [weak self] (_: any UITraitEnvironment, _: UITraitCollection) in
+                self?.applyCurrentTextSize()
+            }
+            traitChangeRegistrationScene = windowScene
+        } else {
+            guard traitChangeRegistration == nil else { return }
+
+            traitChangeRegistration = registerForTraitChanges(
+                [UITraitPreferredContentSizeCategory.self],
+            ) { [weak self] (_: any UITraitEnvironment, _: UITraitCollection) in
+                self?.applyCurrentTextSize()
+            }
+        }
+    }
+
     /// Reapplies the current text size, guarding against trait change recursion.
     private func applyCurrentTextSize() {
+        applyCurrentTextSize(
+            systemContentSizeCategory: view.window?.windowScene?.traitCollection.preferredContentSizeCategory,
+        )
+    }
+
+    func applyCurrentTextSize(systemContentSizeCategory: UIContentSizeCategory?) {
         guard !isApplyingTextSize else { return }
 
         isApplyingTextSize = true
-        applyTextSize(textSize)
+        applyTextSize(textSize, systemContentSizeCategory: systemContentSizeCategory)
         isApplyingTextSize = false
     }
 }

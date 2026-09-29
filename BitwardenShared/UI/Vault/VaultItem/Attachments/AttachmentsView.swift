@@ -141,7 +141,7 @@ struct AttachmentsView: View {
                     store.send(.deletePressed(attachment))
                 } label: {
                     Image(asset: SharedAsset.Icons.trash24)
-                        .imageStyle(.rowIcon(color: SharedAsset.Colors.iconSecondary.swiftUIColor))
+                        .imageStyle(.rowIcon(color: SharedAsset.Colors.iconSecondary.themedSwiftUIColor))
                 }
                 .accessibilityLabel(Localizations.delete)
             }

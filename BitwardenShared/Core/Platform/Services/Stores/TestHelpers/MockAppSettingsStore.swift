@@ -16,6 +16,7 @@ class MockAppSettingsStore: AppSettingsStore { // swiftlint:disable:this type_bo
     var addSitePromptShown = false
     var allowSyncOnRefreshes = [String: Bool]()
     var allowUniversalClipboardByUserId = [String: Bool]()
+    var appAccentColor: String?
     var appId: String?
     var appLocale: String?
     var appRehydrationState = [String: AppRehydrationState]()

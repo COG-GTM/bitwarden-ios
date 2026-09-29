@@ -87,7 +87,7 @@ public enum UI {
         UIPageControl.appearance().currentPageIndicatorTintColor = SharedAsset.Colors.textPrimary.color
         UIPageControl.appearance().pageIndicatorTintColor = SharedAsset.Colors.textPrimary.color.withAlphaComponent(0.3)
 
-        UIBarButtonItem.appearance().tintColor = SharedAsset.Colors.textInteraction.color
+        UIBarButtonItem.appearance().tintColor = SharedAsset.Colors.textInteraction.themedColor
 
         // Make the tab bar opaque.
         let tabBarAppearance = UITabBarAppearance()
@@ -96,7 +96,7 @@ public enum UI {
         tabBarAppearance.compactInlineLayoutAppearance.normal.badgeBackgroundColor = iconBadgeBackground
         tabBarAppearance.compactInlineLayoutAppearance.normal.badgeTextAttributes = iconBadgeTextAttributes
         tabBarAppearance.compactInlineLayoutAppearance.selected.titleTextAttributes = [
-            .foregroundColor: SharedAsset.Colors.iconSecondary.color,
+            .foregroundColor: SharedAsset.Colors.iconSecondary.themedColor,
         ]
         tabBarAppearance.compactInlineLayoutAppearance.normal.titleTextAttributes = [
             .foregroundColor: SharedAsset.Colors.iconPrimary.color,
@@ -104,7 +104,7 @@ public enum UI {
         tabBarAppearance.inlineLayoutAppearance.normal.badgeBackgroundColor = iconBadgeBackground
         tabBarAppearance.inlineLayoutAppearance.normal.badgeTextAttributes = iconBadgeTextAttributes
         tabBarAppearance.inlineLayoutAppearance.selected.titleTextAttributes = [
-            .foregroundColor: SharedAsset.Colors.iconSecondary.color,
+            .foregroundColor: SharedAsset.Colors.iconSecondary.themedColor,
         ]
         tabBarAppearance.inlineLayoutAppearance.normal.titleTextAttributes = [
             .foregroundColor: SharedAsset.Colors.iconPrimary.color,
@@ -112,14 +112,14 @@ public enum UI {
         tabBarAppearance.stackedLayoutAppearance.normal.badgeBackgroundColor = iconBadgeBackground
         tabBarAppearance.stackedLayoutAppearance.normal.badgeTextAttributes = iconBadgeTextAttributes
         tabBarAppearance.stackedLayoutAppearance.selected.titleTextAttributes = [
-            .foregroundColor: SharedAsset.Colors.iconSecondary.color,
+            .foregroundColor: SharedAsset.Colors.iconSecondary.themedColor,
         ]
         tabBarAppearance.stackedLayoutAppearance.normal.titleTextAttributes = [
             .foregroundColor: SharedAsset.Colors.iconPrimary.color,
         ]
         UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
         UITabBar.appearance().standardAppearance = tabBarAppearance
-        UITabBar.appearance().tintColor = SharedAsset.Colors.iconSecondary.color
+        UITabBar.appearance().tintColor = SharedAsset.Colors.iconSecondary.themedColor
         UITabBar.appearance().unselectedItemTintColor = SharedAsset.Colors.iconPrimary.color
 
         UIBarButtonItem.appearance(whenContainedInInstancesOf: [UISearchBar.self]).title = Localizations.cancel
@@ -128,7 +128,7 @@ public enum UI {
             for: .normal,
         )
 
-        UISearchBar.appearance().tintColor = SharedAsset.Colors.textInteraction.color
+        UISearchBar.appearance().tintColor = SharedAsset.Colors.textInteraction.themedColor
         // Explicitly tint the image so that it does not assume the tint color assigned to the entire search bar.
         let image = SharedAsset.Icons.circleX16.image
         let tintedImage = image.withTintColor(SharedAsset.Colors.textSecondary.color, renderingMode: .alwaysOriginal)
@@ -145,7 +145,7 @@ public enum UI {
         UISegmentedControl.appearance().setTitleTextAttributes(
             [
                 .font: UIFontMetrics(forTextStyle: .callout).scaledFont(for: FontFamily.DMSans.semiBold.font(size: 13)),
-                .foregroundColor: SharedAsset.Colors.textInteraction.color,
+                .foregroundColor: SharedAsset.Colors.textInteraction.themedColor,
             ],
             for: .selected,
         )

@@ -29,7 +29,7 @@ struct UpgradedToPremiumActionCardView: View {
             },
         ) {
             SharedAsset.Icons.star24.swiftUIImage
-                .foregroundStyle(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                .foregroundStyle(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
         }
     }
 }

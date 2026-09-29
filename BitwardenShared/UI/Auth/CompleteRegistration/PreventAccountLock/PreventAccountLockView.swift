@@ -74,7 +74,7 @@ struct PreventAccountLockView: View {
     ) -> some View {
         HStack(spacing: 12) {
             Image(decorative: image)
-                .foregroundStyle(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                .foregroundStyle(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

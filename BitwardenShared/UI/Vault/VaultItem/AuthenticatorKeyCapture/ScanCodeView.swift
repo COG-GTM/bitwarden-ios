@@ -62,7 +62,7 @@ struct ScanCodeView: View {
                     Group {
                         Text(Localizations.cannotScanQRCode + " ")
                             + Text(Localizations.enterKeyManually)
-                            .foregroundColor(SharedAsset.Colors.textInteraction.swiftUIColor)
+                            .foregroundColor(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                     }
                     .styleGuide(.body)
                     .multilineTextAlignment(.center)
@@ -133,7 +133,7 @@ struct ScanCodeView: View {
     private func qrCornerGuides(length: CGFloat) -> some View {
         CornerBorderShape(cornerLength: length * 0.1, lineWidth: 3)
             .stroke(lineWidth: 3)
-            .foregroundColor(SharedAsset.Colors.iconSecondary.swiftUIColor)
+            .foregroundColor(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
             .frame(
                 width: length * 0.65,
                 height: length * 0.65,

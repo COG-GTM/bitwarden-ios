@@ -45,12 +45,18 @@ final class AppearanceProcessor: StateProcessor<AppearanceState, AppearanceActio
         case .loadData:
             state.currentLanguage = services.stateService.appLanguage
             state.appTheme = await services.stateService.getAppTheme()
+            state.appAccentColor = await services.stateService.getAppAccentColor()
             state.isShowWebsiteIconsToggleOn = await services.stateService.getShowWebIcons()
         }
     }
 
     override func receive(_ action: AppearanceAction) {
         switch action {
+        case let .appAccentColorChanged(appAccentColor):
+            state.appAccentColor = appAccentColor
+            Task {
+                await services.stateService.setAppAccentColor(appAccentColor)
+            }
         case let .appThemeChanged(appTheme):
             state.appTheme = appTheme
             Task {

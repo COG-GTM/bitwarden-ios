@@ -23,7 +23,7 @@ struct CheckEmailView: View {
                 Image(decorative: Asset.Images.Illustrations.email)
                     .resizable()
                     .frame(width: 100, height: 100)
-                    .foregroundColor(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                    .foregroundColor(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 36)
                     .padding(.bottom, 32)

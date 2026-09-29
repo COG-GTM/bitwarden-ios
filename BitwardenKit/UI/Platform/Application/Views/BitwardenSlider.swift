@@ -29,7 +29,7 @@ public struct BitwardenSlider: View {
     var trackColor: Color = SharedAsset.Colors.sliderTrack.swiftUIColor
 
     /// The color of the filled portion of the slider track.
-    var filledTrackColor: Color = SharedAsset.Colors.sliderFilled.swiftUIColor
+    var filledTrackColor: Color = SharedAsset.Colors.sliderFilled.themedSwiftUIColor
 
     public var body: some View {
         GeometryReader { geometry in
@@ -48,7 +48,7 @@ public struct BitwardenSlider: View {
                     )
 
                 Circle()
-                    .fill(SharedAsset.Colors.sliderFilled.swiftUIColor)
+                    .fill(SharedAsset.Colors.sliderFilled.themedSwiftUIColor)
                     .frame(width: 18, height: 18)
                     .overlay(
                         Circle()
@@ -109,7 +109,7 @@ public struct BitwardenSlider: View {
         step: Double,
         onEditingChanged: @escaping (Bool) -> Void,
         trackColor: Color = SharedAsset.Colors.sliderTrack.swiftUIColor,
-        filledTrackColor: Color = SharedAsset.Colors.sliderFilled.swiftUIColor,
+        filledTrackColor: Color = SharedAsset.Colors.sliderFilled.themedSwiftUIColor,
     ) {
         _value = value
         self.range = range

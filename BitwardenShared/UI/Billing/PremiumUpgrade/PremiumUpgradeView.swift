@@ -114,7 +114,7 @@ struct PremiumUpgradeView: View {
             },
         ) {
             SharedAsset.Icons.informationCircle24.swiftUIImage
-                .foregroundStyle(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                .foregroundStyle(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
         }
     }
 
@@ -127,7 +127,7 @@ struct PremiumUpgradeView: View {
             },
         ) {
             SharedAsset.Icons.informationCircle24.swiftUIImage
-                .foregroundStyle(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                .foregroundStyle(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
         }
     }
 

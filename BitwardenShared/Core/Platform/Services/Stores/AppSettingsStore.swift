@@ -14,6 +14,9 @@ protocol AppSettingsStore: AnyObject {
     /// Whether the autofill info prompt has been shown.
     var addSitePromptShown: Bool { get set }
 
+    /// The app's accent color.
+    var appAccentColor: String? { get set }
+
     /// The app's locale.
     var appLocale: String? { get set }
 
@@ -870,6 +873,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case addSitePromptShown
         case allowSyncOnRefresh(userId: String)
         case allowUniversalClipboard(userId: String)
+        case appAccentColor
         case appID
         case appLocale
         case appRehydrationState(userId: String)
@@ -948,6 +952,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "syncOnRefresh_\(userId)"
             case let .allowUniversalClipboard(userId):
                 "allowUniversalClipboard_\(userId)"
+            case .appAccentColor:
+                "accentColor"
             case .appID:
                 "appId"
             case .appLocale:
@@ -1070,6 +1076,11 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
     var addSitePromptShown: Bool {
         get { fetch(for: .addSitePromptShown) }
         set { store(newValue, for: .addSitePromptShown) }
+    }
+
+    var appAccentColor: String? {
+        get { fetch(for: .appAccentColor) }
+        set { store(newValue, for: .appAccentColor) }
     }
 
     var appLocale: String? {

@@ -265,7 +265,7 @@ struct SendListView: View {
                             store.send(.infoButtonPressed)
                         } label: {
                             Image(asset: SharedAsset.Icons.questionCircle24, label: Text(Localizations.aboutSend))
-                                .foregroundColor(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                                .foregroundColor(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
                         }
                         .frame(minHeight: 44)
                     }

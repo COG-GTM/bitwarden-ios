@@ -28,7 +28,7 @@ struct ImportCXFView: View {
                     EmptyView()
                 case .importing:
                     ProgressView(value: store.state.progress)
-                        .tint(SharedAsset.Colors.tintPrimary.swiftUIColor)
+                        .tint(SharedAsset.Colors.tintPrimary.themedSwiftUIColor)
                         .frame(maxWidth: .infinity)
                         .scaleEffect(x: 1, y: 3, anchor: .center)
                         .accessibilityIdentifier("ImportProgress")

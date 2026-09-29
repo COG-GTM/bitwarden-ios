@@ -46,7 +46,7 @@ extension NumberedList {
                     HStack(spacing: 12) {
                         Text(String(index + 1))
                             .styleGuide(.title2, weight: .bold)
-                            .foregroundStyle(SharedAsset.Colors.textInteraction.swiftUIColor)
+                            .foregroundStyle(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                             .frame(minWidth: 24, alignment: .center)
                             .padding(.leading, 12)
 

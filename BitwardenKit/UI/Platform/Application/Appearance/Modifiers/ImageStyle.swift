@@ -59,7 +59,7 @@ public extension ImageStyle {
     /// - Color: `Asset.Colors.iconSecondary`
     ///
     static let toolbarIcon = ImageStyle(
-        color: SharedAsset.Colors.iconSecondary.swiftUIColor,
+        color: SharedAsset.Colors.iconSecondary.themedSwiftUIColor,
         scaleWithFont: false,
         width: 24,
         height: 24,

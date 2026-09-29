@@ -85,7 +85,7 @@ struct StartRegistrationView: View {
                 Image(decorative: Asset.Images.logo)
                     .resizable()
                     .scaledToFit()
-                    .foregroundColor(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                    .foregroundColor(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
                     .frame(maxWidth: .infinity, maxHeight: 34)
                     .padding(.horizontal, 12)
 
@@ -121,7 +121,7 @@ struct StartRegistrationView: View {
                 send: StartRegistrationAction.toggleReceiveMarketing,
             )) {
                 Text(LocalizedStringKey(store.state.receiveMarketingEmailsText))
-                    .tint(SharedAsset.Colors.textInteraction.swiftUIColor)
+                    .tint(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                     .foregroundColor(SharedAsset.Colors.textPrimary.swiftUIColor)
                     .styleGuide(.subheadline)
             }
@@ -149,7 +149,7 @@ struct StartRegistrationView: View {
     private var termsAndPrivacyText: some View {
         Text(LocalizedStringKey(store.state.termsAndPrivacyDisclaimerText))
             .styleGuide(.footnote)
-            .tint(SharedAsset.Colors.textInteraction.swiftUIColor)
+            .tint(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
             .foregroundColor(SharedAsset.Colors.textPrimary.swiftUIColor)
             .padding([.bottom], 32)
             .multilineTextAlignment(.center)

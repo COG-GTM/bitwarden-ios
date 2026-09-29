@@ -34,6 +34,15 @@ class AppearanceViewTests: BitwardenTestCase {
 
     // MARK: Tests
 
+    /// Updating the value of the accent color sends the `.appAccentColorChanged()` action.
+    @MainActor
+    func test_appAccentColorChanged_updateValue() throws {
+        processor.state.appAccentColor = .default
+        let menuField = try subject.inspect().find(bitwardenMenuField: Localizations.accentColor)
+        try menuField.select(newValue: AppAccentColor.pink)
+        XCTAssertEqual(processor.dispatchedActions.last, .appAccentColorChanged(.pink))
+    }
+
     /// Updating the value of the app theme sends the  `.appThemeChanged()` action.
     @MainActor
     func test_appThemeChanged_updateValue() throws {

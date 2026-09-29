@@ -78,7 +78,7 @@ struct ManualEntryView: View {
                     await store.perform(.scanCodePressed)
                 } label: {
                     Text(Localizations.scanQRCode)
-                        .foregroundColor(SharedAsset.Colors.textInteraction.swiftUIColor)
+                        .foregroundColor(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                         .styleGuide(.callout)
                 }
                 .buttonStyle(InlineButtonStyle())

@@ -147,6 +147,12 @@ protocol StateService: AnyObject, DebugStateService {
     ///
     func getAllowUniversalClipboard(userId: String?) async throws -> Bool
 
+    /// Gets the app accent color.
+    ///
+    /// - Returns: The app accent color.
+    ///
+    func getAppAccentColor() async -> AppAccentColor
+
     /// Gets the app rehydration state.
     /// - Parameter userId: The user ID associated with this state.
     /// - Returns: The rehydration state.
@@ -564,6 +570,12 @@ protocol StateService: AnyObject, DebugStateService {
     ///
     func setAllowUniversalClipboard(_ allowUniversalClipboard: Bool, userId: String?) async throws
 
+    /// Sets the app accent color.
+    ///
+    /// - Parameter appAccentColor: The new app accent color.
+    ///
+    func setAppAccentColor(_ appAccentColor: AppAccentColor) async
+
     /// Sets the app theme.
     ///
     /// - Parameter appTheme: The new app theme.
@@ -869,6 +881,12 @@ protocol StateService: AnyObject, DebugStateService {
     /// - Returns: The userId `String` of the active account
     ///
     func activeAccountIdPublisher() async -> AnyPublisher<String?, Never>
+
+    /// A publisher for the app accent color.
+    ///
+    /// - Returns: A publisher for the app accent color.
+    ///
+    func appAccentColorPublisher() async -> AnyPublisher<AppAccentColor, Never>
 
     /// A publisher for the app theme.
     ///
@@ -1542,6 +1560,9 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     /// The service that persists app settings.
     let appSettingsStore: AppSettingsStore
 
+    /// A subject containing the app accent color.
+    private var appAccentColorSubject: CurrentValueSubject<AppAccentColor, Never>
+
     /// A subject containing the app theme.
     private var appThemeSubject: CurrentValueSubject<AppTheme, Never>
 
@@ -1605,6 +1626,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         self.timeProvider = timeProvider
         self.userSessionKeychainRepository = userSessionKeychainRepository
 
+        appAccentColorSubject = CurrentValueSubject(AppAccentColor(appSettingsStore.appAccentColor))
         appThemeSubject = CurrentValueSubject(AppTheme(appSettingsStore.appTheme))
         showWebIconsSubject = CurrentValueSubject(!appSettingsStore.disableWebIcons)
 
@@ -1746,6 +1768,10 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     func getAllowUniversalClipboard(userId: String?) async throws -> Bool {
         let userId = try userId ?? getActiveAccountUserId()
         return appSettingsStore.allowUniversalClipboard(userId: userId)
+    }
+
+    func getAppAccentColor() async -> AppAccentColor {
+        AppAccentColor(appSettingsStore.appAccentColor)
     }
 
     func getAppRehydrationState(userId: String?) async throws -> AppRehydrationState? {
@@ -2130,6 +2156,11 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         appSettingsStore.setAllowUniversalClipboard(allowUniversalClipboard, userId: userId)
     }
 
+    func setAppAccentColor(_ appAccentColor: AppAccentColor) async {
+        appSettingsStore.appAccentColor = appAccentColor.value
+        appAccentColorSubject.send(appAccentColor)
+    }
+
     func setAppTheme(_ appTheme: AppTheme) async {
         appSettingsStore.appTheme = appTheme.value
         appThemeSubject.send(appTheme)
@@ -2394,6 +2425,10 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
 
     func activeAccountIdPublisher() -> AnyPublisher<String?, Never> {
         appSettingsStore.activeAccountIdPublisher()
+    }
+
+    func appAccentColorPublisher() async -> AnyPublisher<AppAccentColor, Never> {
+        appAccentColorSubject.eraseToAnyPublisher()
     }
 
     func appThemePublisher() async -> AnyPublisher<AppTheme, Never> {

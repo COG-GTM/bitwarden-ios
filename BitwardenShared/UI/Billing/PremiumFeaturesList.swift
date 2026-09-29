@@ -32,7 +32,7 @@ struct PremiumFeaturesList: View {
     private func featureRow(_ text: String) -> some View {
         HStack(spacing: 12) {
             SharedAsset.Icons.checkCircle24.swiftUIImage
-                .foregroundColor(Color(asset: SharedAsset.Colors.textInteraction))
+                .foregroundColor(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                 .accessibilityHidden(true)
 
             Text(text)

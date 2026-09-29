@@ -23,6 +23,8 @@ struct AppearanceView: View {
 
             theme
 
+            accentColor
+
             webSiteIconsToggle
         }
         .scrollView()
@@ -55,6 +57,20 @@ struct AppearanceView: View {
     }
 
     /// The application's color theme picker view
+    private var accentColor: some View {
+        BitwardenMenuField(
+            title: Localizations.accentColor,
+            footer: Localizations.accentColorDescription,
+            accessibilityIdentifier: "AccentColorChooser",
+            options: AppAccentColor.allCases,
+            selection: store.binding(
+                get: \.appAccentColor,
+                send: AppearanceAction.appAccentColorChanged,
+            ),
+        )
+    }
+
+    /// The application's color theme picker view.
     private var theme: some View {
         BitwardenMenuField(
             title: Localizations.theme,

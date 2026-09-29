@@ -26,7 +26,7 @@ public struct PrimaryButtonStyle: ButtonStyle {
         }
         return isDestructive
             ? SharedAsset.Colors.error.swiftUIColor
-            : SharedAsset.Colors.buttonFilledBackground.swiftUIColor
+            : SharedAsset.Colors.buttonFilledBackground.themedSwiftUIColor
     }
 
     /// The color of the foreground elements in this button, including text and template

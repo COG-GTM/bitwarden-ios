@@ -330,7 +330,7 @@ extension SearchableVaultListView {
                 },
             ) {
                 SharedAsset.Icons.archive24.swiftUIImage
-                    .foregroundStyle(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                    .foregroundStyle(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
             }
         case .subscriptionNeedsAttention:
             ActionCard(
@@ -379,7 +379,7 @@ extension SearchableVaultListView {
                     : nil,
             ) {
                 SharedAsset.Icons.informationCircle24.swiftUIImage
-                    .foregroundStyle(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                    .foregroundStyle(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
             }
         }
     }

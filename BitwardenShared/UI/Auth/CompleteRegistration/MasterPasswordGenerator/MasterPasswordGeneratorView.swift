@@ -83,7 +83,7 @@ struct MasterPasswordGeneratorView: View {
             } label: {
                 Text(Localizations.learnAboutOtherWaysToPreventAccountLockout)
                     .styleGuide(.footnote, weight: .semibold)
-                    .foregroundStyle(SharedAsset.Colors.textInteraction.swiftUIColor)
+                    .foregroundStyle(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                     .multilineTextAlignment(.leading)
             }
         }

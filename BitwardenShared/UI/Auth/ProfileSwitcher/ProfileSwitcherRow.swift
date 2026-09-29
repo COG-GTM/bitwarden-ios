@@ -115,7 +115,7 @@ struct ProfileSwitcherRow: View {
             .accessibilityLabel(Localizations.account)
         case .addAccount:
             SharedAsset.Icons.plus16.swiftUIImage
-                .imageStyle(.accessoryIcon16(color: SharedAsset.Colors.iconSecondary.swiftUIColor))
+                .imageStyle(.accessoryIcon16(color: SharedAsset.Colors.iconSecondary.themedSwiftUIColor))
                 .padding(4)
         }
     }

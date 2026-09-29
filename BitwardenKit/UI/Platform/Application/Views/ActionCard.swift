@@ -109,7 +109,7 @@ public struct ActionCard<LeadingContent: View>: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(SharedAsset.Colors.strokeBorder.swiftUIColor)
+                .strokeBorder(SharedAsset.Colors.strokeBorder.themedSwiftUIColor)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(SharedAsset.Colors.backgroundTertiary.swiftUIColor),

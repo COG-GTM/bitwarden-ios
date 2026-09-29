@@ -55,13 +55,29 @@ class AppearanceProcessorTests: BitwardenTestCase {
         XCTAssertEqual(subject.state.appTheme, .default)
         stateService.appLanguage = .custom(languageCode: "de")
         stateService.appTheme = .light
+        stateService.appAccentColor = .purple
         stateService.showWebIcons = false
 
         await subject.perform(.loadData)
 
         XCTAssertEqual(subject.state.currentLanguage, .custom(languageCode: "de"))
         XCTAssertEqual(subject.state.appTheme, .light)
+        XCTAssertEqual(subject.state.appAccentColor, .purple)
         XCTAssertFalse(subject.state.isShowWebsiteIconsToggleOn)
+    }
+
+    /// `receive(_:)` with `.appAccentColorChanged` updates the accent color.
+    @MainActor
+    func test_receive_appAccentColorChanged() {
+        subject.receive(.appAccentColorChanged(.teal))
+
+        XCTAssertEqual(subject.state.appAccentColor, .teal)
+        waitFor(stateService.appAccentColor == .teal)
+
+        subject.receive(.appAccentColorChanged(.default))
+
+        XCTAssertEqual(subject.state.appAccentColor, .default)
+        waitFor(stateService.appAccentColor == .default)
     }
 
     /// `receive(_:)` with `.appThemeChanged` updates the theme.

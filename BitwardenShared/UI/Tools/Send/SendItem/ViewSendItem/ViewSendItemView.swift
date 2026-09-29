@@ -122,7 +122,7 @@ struct ViewSendItemView: View {
                     : nil,
             ) {
                 SharedAsset.Icons.informationCircle24.swiftUIImage
-                    .foregroundStyle(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                    .foregroundStyle(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
             }
             .accessibilityIdentifier("ViewSendRestrictionBanner")
         }

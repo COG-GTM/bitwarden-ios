@@ -5,6 +5,9 @@ import BitwardenKit
 /// Actions handled by the `AppearanceProcessor`.
 ///
 enum AppearanceAction: Equatable {
+    /// The accent color was changed.
+    case appAccentColorChanged(AppAccentColor)
+
     /// The default color theme was changed.
     case appThemeChanged(AppTheme)
 

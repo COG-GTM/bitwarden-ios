@@ -83,7 +83,7 @@ struct CompleteRegistrationView: View {
     private var learnMoreSection: some View {
         HStack(alignment: .center, spacing: 16) {
             Image(decorative: SharedAsset.Icons.questionCircle24)
-                .foregroundStyle(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                .foregroundStyle(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
 
             VStack(alignment: .leading, spacing: 0) {
                 Text(Localizations.whatMakesAPasswordStrong)
@@ -96,7 +96,7 @@ struct CompleteRegistrationView: View {
                 } label: {
                     Text(Localizations.learnMore)
                         .styleGuide(.subheadline)
-                        .foregroundStyle(SharedAsset.Colors.textInteraction.swiftUIColor)
+                        .foregroundStyle(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -148,7 +148,7 @@ struct CompleteRegistrationView: View {
                         store.send(.preventAccountLockTapped)
                     } label: {
                         Text(Localizations.learnAboutWaysToPreventAccountLockout)
-                            .foregroundColor(SharedAsset.Colors.textInteraction.swiftUIColor)
+                            .foregroundColor(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                             .styleGuide(.footnote, weight: .bold)
                             .multilineTextAlignment(.leading)
                     }

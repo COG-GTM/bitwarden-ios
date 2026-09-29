@@ -80,7 +80,7 @@ struct LandingView: View {
                 Image(decorative: Asset.Images.logo)
                     .resizable()
                     .scaledToFit()
-                    .foregroundColor(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                    .foregroundColor(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
                     .frame(maxWidth: .infinity, maxHeight: 34)
                     .padding(.horizontal, 12)
 
@@ -151,7 +151,7 @@ struct LandingView: View {
                         store.send(.createAccountPressed)
                     }
                     .accessibilityIdentifier("CreateAccountButton")
-                    .foregroundColor(SharedAsset.Colors.textInteraction.swiftUIColor)
+                    .foregroundColor(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                     Spacer()
                 }
                 .styleGuide(.footnote)

@@ -80,7 +80,7 @@ extension View {
                         .accessibilityHidden(initials != nil)
                 }
             }
-            .foregroundColor(textColor ?? SharedAsset.Colors.textInteraction.swiftUIColor)
+            .foregroundColor(textColor ?? SharedAsset.Colors.textInteraction.themedSwiftUIColor)
             .background(color)
             .if(size.shouldClipToCircle) { view in
                 view.clipShape(Circle())

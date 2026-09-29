@@ -12,7 +12,7 @@ public struct BitwardenToggleStyle: ToggleStyle {
     public func makeBody(configuration: Configuration) -> some View {
         Toggle(configuration)
             .bitwardenToggleLabelStyle(isEnabled: isEnabled)
-            .tint(SharedAsset.Colors.iconSecondary.swiftUIColor)
+            .tint(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
     }
 }
 

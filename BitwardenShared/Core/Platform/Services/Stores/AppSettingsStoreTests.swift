@@ -259,6 +259,22 @@ class AppSettingsStoreTests: BitwardenTestCase { // swiftlint:disable:this type_
         )
     }
 
+    /// `appAccentColor` returns `nil` if there isn't a previously stored value.
+    func test_appAccentColor_isInitiallyNil() {
+        XCTAssertNil(subject.appAccentColor)
+    }
+
+    /// `appAccentColor` can be used to get and set the persisted value in user defaults.
+    func test_appAccentColor_withValue() {
+        subject.appAccentColor = "purple"
+        XCTAssertEqual(subject.appAccentColor, "purple")
+        XCTAssertEqual(userDefaults.string(forKey: "bwPreferencesStorage:accentColor"), "purple")
+
+        subject.appAccentColor = nil
+        XCTAssertNil(subject.appAccentColor)
+        XCTAssertNil(userDefaults.string(forKey: "bwPreferencesStorage:accentColor"))
+    }
+
     /// `appTheme` returns `nil` if there isn't a previously stored value.
     func test_appTheme_isInitiallyNil() {
         XCTAssertNil(subject.appTheme)

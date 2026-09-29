@@ -238,7 +238,7 @@ public struct DateFieldPicker: View {
                 toggleExpanded()
             } label: {
                 SharedAsset.Icons.chevronDown24.swiftUIImage
-                    .foregroundColor(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                    .foregroundColor(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
             }
             .buttonStyle(.plain)

@@ -168,7 +168,7 @@ struct GuidedTourView: View {
                 } label: {
                     Text(Localizations.back)
                         .styleGuide(.callout, weight: .semibold)
-                        .foregroundStyle(SharedAsset.Colors.textInteraction.swiftUIColor)
+                        .foregroundStyle(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                         .multilineTextAlignment(.leading)
                         .dynamicTypeSize(...maxDynamicTypeSize)
                 }
@@ -192,7 +192,7 @@ struct GuidedTourView: View {
                     store.state.step < store.state.totalSteps ? Localizations.next : Localizations.done,
                 )
                 .styleGuide(.callout, weight: .semibold)
-                .foregroundStyle(SharedAsset.Colors.textInteraction.swiftUIColor)
+                .foregroundStyle(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                 .multilineTextAlignment(.leading)
                 .dynamicTypeSize(...maxDynamicTypeSize)
             }

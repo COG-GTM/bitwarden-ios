@@ -32,7 +32,7 @@ struct PremiumUpgradeBenefitsList: View {
     private func benefitRow(_ text: String) -> some View {
         HStack(spacing: 12) {
             SharedAsset.Icons.check16.swiftUIImage
-                .foregroundColor(Color(asset: SharedAsset.Colors.textInteraction))
+                .foregroundColor(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                 .accessibilityHidden(true)
 
             Text(text)

@@ -26,14 +26,14 @@ struct RegionSelector: View {
                     Text("\(selectorLabel): ")
                         .foregroundColor(SharedAsset.Colors.textSecondary.swiftUIColor)
                         + Text(regionName).bold()
-                        .foregroundColor(SharedAsset.Colors.textInteraction.swiftUIColor)
+                        .foregroundColor(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                 }
                 .styleGuide(.footnote)
                 .multilineTextAlignment(.leading)
 
                 Image(decorative: SharedAsset.Icons.chevronDown16)
                     .scaledFrame(width: 12, height: 12)
-                    .foregroundColor(SharedAsset.Colors.iconSecondary.swiftUIColor)
+                    .foregroundColor(SharedAsset.Colors.iconSecondary.themedSwiftUIColor)
             }
         }
         .accessibilityIdentifier("RegionSelectorDropdown")

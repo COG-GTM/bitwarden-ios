@@ -31,6 +31,8 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     var addSitePromptShown = false
     var allowSyncOnRefresh = [String: Bool]()
     var allowUniversalClipboard = [String: Bool]()
+    var appAccentColor: AppAccentColor?
+    lazy var appAccentColorSubject = CurrentValueSubject<AppAccentColor, Never>(self.appAccentColor ?? .default)
     var appLanguage: LanguageOption = .default
     var appRehydrationState = [String: AppRehydrationState]()
     var appTheme: AppTheme?
@@ -287,6 +289,10 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     func getAllowUniversalClipboard(userId: String?) async throws -> Bool {
         let userId = try unwrapUserId(userId)
         return allowUniversalClipboard[userId] ?? false
+    }
+
+    func getAppAccentColor() async -> AppAccentColor {
+        appAccentColor ?? .default
     }
 
     func getAppRehydrationState(userId: String?) async throws -> BitwardenShared.AppRehydrationState? {
@@ -616,6 +622,11 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
         self.allowUniversalClipboard[userId] = allowUniversalClipboard
     }
 
+    func setAppAccentColor(_ appAccentColor: AppAccentColor) async {
+        self.appAccentColor = appAccentColor
+        appAccentColorSubject.send(appAccentColor)
+    }
+
     func setAppRehydrationState(
         _ rehydrationState: BitwardenShared.AppRehydrationState?,
         userId: String?,
@@ -928,6 +939,10 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
 
     func activeAccountIdPublisher() async -> AnyPublisher<String?, Never> {
         activeIdSubject.eraseToAnyPublisher()
+    }
+
+    func appAccentColorPublisher() async -> AnyPublisher<AppAccentColor, Never> {
+        appAccentColorSubject.eraseToAnyPublisher()
     }
 
     func appThemePublisher() async -> AnyPublisher<AppTheme, Never> {

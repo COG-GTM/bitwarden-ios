@@ -46,7 +46,7 @@ struct EnableFlightRecorderView: View {
                     ExternalLinksConstants.helpAndFeedback,
                 ),
             ))
-            .tint(SharedAsset.Colors.textInteraction.swiftUIColor)
+            .tint(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
         }
         .foregroundStyle(SharedAsset.Colors.textSecondary.swiftUIColor)
         .multilineTextAlignment(.center)

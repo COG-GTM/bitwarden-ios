@@ -90,6 +90,7 @@ public class AppProcessor {
         startEventTimer()
 
         UI.initialLanguageCode = services.appSettingsStore.appLocale ?? Bundle.main.preferredLocalizations.first
+        AppAccentColor.current = AppAccentColor(services.appSettingsStore.appAccentColor)
         UI.applyDefaultAppearances()
 
         listenForWillEnterForeground(debugWillEnterForeground: debugWillEnterForeground)
@@ -139,6 +140,15 @@ public class AppProcessor {
                 navigator.appTheme = appTheme
                 splashWindow?.overrideUserInterfaceStyle = appTheme.userInterfaceStyle
                 window?.overrideUserInterfaceStyle = appTheme.userInterfaceStyle
+            }
+        }
+
+        Task {
+            for await accentColor in await services.stateService.appAccentColorPublisher().dropFirst().values {
+                AppAccentColor.current = accentColor
+                UI.applyDefaultAppearances()
+                splashWindow?.redrawForAccentColorChange()
+                window?.redrawForAccentColorChange()
             }
         }
 
@@ -874,3 +884,20 @@ extension AppProcessor: PendingAppIntentActionMediatorDelegate {
 }
 
 // swiftlint:disable:this file_length
+
+// MARK: - UIWindow
+
+private extension UIWindow {
+    /// Forces the window's views to re-resolve their dynamic colors so that a newly selected
+    /// `AppAccentColor` is applied to views that are already on screen.
+    ///
+    func redrawForAccentColorChange() {
+        let currentStyle = overrideUserInterfaceStyle
+        let resolvedStyle = traitCollection.userInterfaceStyle
+        overrideUserInterfaceStyle = resolvedStyle == .dark ? .light : .dark
+        layoutIfNeeded()
+        overrideUserInterfaceStyle = currentStyle
+        layoutIfNeeded()
+        tintColor = AppAccentColor.current.color(for: traitCollection)
+    }
+}

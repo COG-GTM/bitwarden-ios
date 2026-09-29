@@ -200,7 +200,7 @@ public extension IllustratedMessageView where Accessory == EmptyView {
         Button {} label: {
             Text(Localizations.learnMore)
                 .styleGuide(.subheadline)
-                .foregroundStyle(SharedAsset.Colors.textInteraction.swiftUIColor)
+                .foregroundStyle(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
         }
     }
 }
@@ -276,7 +276,7 @@ private extension IllustratedMessageStyle {
 public extension IllustratedMessageStyle {
     /// A style with a large title text and a tinted icon image.
     static let largeTextTintedIcon = IllustratedMessageStyle(
-        imageColor: SharedAsset.Colors.iconSecondary.swiftUIColor,
+        imageColor: SharedAsset.Colors.iconSecondary.themedSwiftUIColor,
         imageSize: OrientationBasedValue(
             both: iconSquareImageDimension,
         ),

@@ -21,7 +21,7 @@ public struct CircularActivityIndicator: View {
 
             Circle()
                 .trim(from: 0, to: 0.65)
-                .stroke(SharedAsset.Colors.strokeBorder.swiftUIColor, style: strokeStyle)
+                .stroke(SharedAsset.Colors.strokeBorder.themedSwiftUIColor, style: strokeStyle)
                 .rotationEffect(Angle(degrees: isSpinning ? 360 : 0))
                 .onAppear {
                     withAnimation(.linear(duration: 1).repeatForever(autoreverses: false)) {

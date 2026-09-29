@@ -416,7 +416,7 @@ struct ViewItemDetailsView: View { // swiftlint:disable:this type_body_length
                         Text(Localizations.passwordHistory + ": \(passwordHistoryCount)")
                             .styleGuide(.callout, weight: .semibold)
                     }
-                    .foregroundStyle(SharedAsset.Colors.textInteraction.swiftUIColor)
+                    .foregroundStyle(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
                     .id("passwordHistoryButton")
                 }
             }
@@ -493,7 +493,7 @@ struct ViewItemDetailsView: View { // swiftlint:disable:this type_body_length
                     store.send(.downloadAttachment(attachment))
                 } label: {
                     Image(asset: SharedAsset.Icons.download24)
-                        .imageStyle(.rowIcon(color: SharedAsset.Colors.iconSecondary.swiftUIColor))
+                        .imageStyle(.rowIcon(color: SharedAsset.Colors.iconSecondary.themedSwiftUIColor))
                 }
                 .accessibilityLabel(Localizations.download)
             }

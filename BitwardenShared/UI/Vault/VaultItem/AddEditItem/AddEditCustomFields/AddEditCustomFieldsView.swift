@@ -128,7 +128,7 @@ struct AddEditCustomFieldsView: View {
             Group {
                 if isInFieldLabel {
                     SharedAsset.Icons.cog16.swiftUIImage
-                        .imageStyle(.accessoryIcon16(color: SharedAsset.Colors.textInteraction.swiftUIColor))
+                        .imageStyle(.accessoryIcon16(color: SharedAsset.Colors.textInteraction.themedSwiftUIColor))
                 } else {
                     SharedAsset.Icons.cog24.swiftUIImage
                         .imageStyle(.accessoryIcon24)

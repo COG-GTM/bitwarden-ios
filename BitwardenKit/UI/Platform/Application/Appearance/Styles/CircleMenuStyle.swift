@@ -18,7 +18,7 @@ public struct CircleMenuStyle: MenuStyle {
     /// The background color of this button.
     var backgroundColor: Color {
         isEnabled
-            ? SharedAsset.Colors.buttonFilledBackground.swiftUIColor
+            ? SharedAsset.Colors.buttonFilledBackground.themedSwiftUIColor
             : SharedAsset.Colors.buttonFilledDisabledBackground.swiftUIColor
     }
 

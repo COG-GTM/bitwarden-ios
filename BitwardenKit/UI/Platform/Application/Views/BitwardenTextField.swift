@@ -227,7 +227,7 @@ public struct BitwardenTextField<FooterContent: View, TrailingContent: View>: Vi
             }
             .frame(maxWidth: .infinity, minHeight: 28)
         }
-        .tint(SharedAsset.Colors.tintPrimary.swiftUIColor)
+        .tint(SharedAsset.Colors.tintPrimary.themedSwiftUIColor)
         .onAppear {
             isSecureFieldFocused = isPasswordAutoFocused
         }

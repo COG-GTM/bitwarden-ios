@@ -133,7 +133,7 @@ struct ImportLoginsView: View {
             ))
             .multilineTextAlignment(.center)
             .styleGuide(.footnote)
-            .tint(SharedAsset.Colors.textInteraction.swiftUIColor)
+            .tint(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
 
             VStack(spacing: 12) {
                 AsyncButton(step == totalSteps ? Localizations.done : Localizations.continue) {

@@ -126,7 +126,7 @@ struct LoginView: View {
                 store.send(.notYouPressed)
             }
             .accessibilityIdentifier("NotYouLabel")
-            .foregroundColor(SharedAsset.Colors.textInteraction.swiftUIColor)
+            .foregroundColor(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .styleGuide(.footnote)

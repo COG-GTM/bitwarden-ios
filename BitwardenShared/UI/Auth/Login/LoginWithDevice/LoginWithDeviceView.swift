@@ -57,7 +57,7 @@ struct LoginWithDeviceView: View {
                 store.send(.dismiss)
             }
             .styleGuide(.subheadlineSemibold)
-            .foregroundStyle(SharedAsset.Colors.textInteraction.swiftUIColor)
+            .foregroundStyle(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
             .accessibilityIdentifier("ViewAllLoginOptionsButton")
         }
     }

@@ -122,7 +122,7 @@ struct LoginDecryptionOptionsView: View {
                 await store.perform(.notYouPressed)
             }
             .accessibilityIdentifier("NotYouButton")
-            .foregroundColor(SharedAsset.Colors.textInteraction.swiftUIColor)
+            .foregroundColor(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
         }
         .styleGuide(.footnote)
     }

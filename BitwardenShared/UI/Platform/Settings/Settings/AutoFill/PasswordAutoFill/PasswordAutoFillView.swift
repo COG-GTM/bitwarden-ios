@@ -83,7 +83,7 @@ struct PasswordAutoFillView: View {
                 ),
             )
             .styleGuide(.subheadline)
-            .tint(SharedAsset.Colors.textInteraction.swiftUIColor)
+            .tint(SharedAsset.Colors.textInteraction.themedSwiftUIColor)
 
             VStack(spacing: 12) {
                 AsyncButton(Localizations.continue) {

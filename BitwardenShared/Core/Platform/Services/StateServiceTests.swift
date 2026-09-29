@@ -112,6 +112,33 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertEqual(appSettingsStore.pendingAppIntentActions, [.lockAll])
     }
 
+    /// `appAccentColor` gets and sets the value as expected.
+    func test_appAccentColor() async {
+        appSettingsStore.appAccentColor = "purple"
+        let accentColor = await subject.getAppAccentColor()
+        XCTAssertEqual(accentColor, .purple)
+
+        await subject.setAppAccentColor(.green)
+        XCTAssertEqual(appSettingsStore.appAccentColor, "green")
+
+        await subject.setAppAccentColor(.default)
+        XCTAssertNil(appSettingsStore.appAccentColor)
+    }
+
+    /// `appAccentColorPublisher()` returns a publisher for the app's accent color.
+    func test_appAccentColorPublisher() async {
+        var publishedValues = [AppAccentColor]()
+        let publisher = await subject.appAccentColorPublisher()
+            .sink(receiveValue: { accentColor in
+                publishedValues.append(accentColor)
+            })
+        defer { publisher.cancel() }
+
+        await subject.setAppAccentColor(.orange)
+
+        XCTAssertEqual(publishedValues, [.default, .orange])
+    }
+
     /// `appTheme` gets and sets the value as expected.
     func test_appTheme() async {
         // Getting the value should get the value from the app settings store.

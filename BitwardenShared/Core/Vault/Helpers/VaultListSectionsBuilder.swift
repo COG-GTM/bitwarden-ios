@@ -335,15 +335,28 @@ class DefaultVaultListSectionsBuilder: VaultListSectionsBuilder { // swiftlint:d
     }
 
     func addGroupSection() -> VaultListSectionsBuilder {
-        if !preparedData.groupItems.isEmpty {
+        let lastUsedDates = preparedData.totpLastUsedDates
+        let recentlyUsedItems = preparedData.groupItems
+            .filter { lastUsedDates[$0.id] != nil }
+            .sorted(by: VaultListItem.recencySortComparator(lastUsedDates: lastUsedDates))
+        if !recentlyUsedItems.isEmpty {
+            vaultListData.sections.append(
+                VaultListSection(
+                    id: "RecentlyUsed",
+                    items: recentlyUsedItems,
+                    name: Localizations.recentlyUsed,
+                ),
+            )
+        }
+
+        let items = preparedData.groupItems
+            .filter { lastUsedDates[$0.id] == nil }
+            .sorted(using: VaultListItem.defaultSortDescriptor)
+        if !items.isEmpty {
             vaultListData.sections.append(
                 VaultListSection(
                     id: "Items",
-                    items: preparedData.totpLastUsedDates.isEmpty
-                        ? preparedData.groupItems.sorted(using: VaultListItem.defaultSortDescriptor)
-                        : preparedData.groupItems.sorted(
-                            by: VaultListItem.recencySortComparator(lastUsedDates: preparedData.totpLastUsedDates),
-                        ),
+                    items: items,
                     name: Localizations.items,
                 ),
             )

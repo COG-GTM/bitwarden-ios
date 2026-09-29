@@ -352,8 +352,9 @@ class VaultListSectionsBuilderTests: BitwardenTestCase { // swiftlint:disable:th
         }
     }
 
-    /// `addGroupSection()` adds the group section with the items ordered by most recently used
-    /// when there are TOTP last used dates, falling back to ordering by name.
+    /// `addGroupSection()` adds a recently used section with the items that have a TOTP last used
+    /// date ordered by most recently used, followed by the group section with the remaining items
+    /// ordered by name.
     func test_addGroupSection_totpLastUsedDates() {
         setUpSubject(
             withData: VaultListPreparedData(
@@ -376,12 +377,40 @@ class VaultListSectionsBuilderTests: BitwardenTestCase { // swiftlint:disable:th
 
         assertInlineSnapshot(of: vaultListData.sections.dump(), as: .lines) {
             """
-            Section[Items]: Items
+            Section[RecentlyUsed]: Recently used
               - Cipher: Zoom
               - Cipher: Dropbox
               - Cipher: GitHub
+            Section[Items]: Items
               - Cipher: Amazon
               - Cipher: Slack
+            """
+        }
+    }
+
+    /// `addGroupSection()` only adds the recently used section if every group item has a TOTP last
+    /// used date.
+    func test_addGroupSection_totpLastUsedDates_allUsed() {
+        setUpSubject(
+            withData: VaultListPreparedData(
+                groupItems: [
+                    .fixture(cipherListView: .fixture(id: "1", name: "Amazon")),
+                    .fixture(cipherListView: .fixture(id: "2", name: "GitHub")),
+                ],
+                totpLastUsedDates: [
+                    "1": Date(year: 2025, month: 1, day: 1),
+                    "2": Date(year: 2025, month: 2, day: 1),
+                ],
+            ),
+        )
+
+        let vaultListData = subject.addGroupSection().build()
+
+        assertInlineSnapshot(of: vaultListData.sections.dump(), as: .lines) {
+            """
+            Section[RecentlyUsed]: Recently used
+              - Cipher: GitHub
+              - Cipher: Amazon
             """
         }
     }

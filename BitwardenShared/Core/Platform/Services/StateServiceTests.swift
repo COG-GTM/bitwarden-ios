@@ -1238,6 +1238,23 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertEqual(action, .logout)
     }
 
+    /// `getTOTPLastUsedDates()` returns the TOTP last used dates for the active account.
+    func test_getTOTPLastUsedDates() async throws {
+        await subject.addAccount(.fixture())
+        let date = Date(year: 2025, month: 1, day: 1)
+        appSettingsStore.totpLastUsedDatesByUserId["1"] = ["cipher-1": date]
+
+        let value = try await subject.getTOTPLastUsedDates()
+        XCTAssertEqual(value, ["cipher-1": date])
+    }
+
+    /// `getTOTPLastUsedDates()` throws an error if there isn't an active account.
+    func test_getTOTPLastUsedDates_noAccount() async {
+        await assertAsyncThrows(error: StateServiceError.noActiveAccount) {
+            _ = try await subject.getTOTPLastUsedDates()
+        }
+    }
+
     /// `getTwoFactorToken(email:)` gets the two-factor code associated with the email.
     func test_getTwoFactorToken() async {
         appSettingsStore.setTwoFactorToken("yay_you_win!", email: "winner@email.com")
@@ -2870,6 +2887,41 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         await assertAsyncThrows(error: StateServiceError.noActiveAccount) {
             _ = try await subject.settingsBadgePublisher()
         }
+    }
+
+    /// `setTOTPLastUsedDate(_:cipherId:)` records the TOTP last used date for the cipher while
+    /// preserving the dates for other ciphers.
+    func test_setTOTPLastUsedDate() async throws {
+        await subject.addAccount(.fixture())
+        let date1 = Date(year: 2025, month: 1, day: 1)
+        let date2 = Date(year: 2025, month: 2, day: 1)
+        appSettingsStore.totpLastUsedDatesByUserId["1"] = ["cipher-1": date1]
+
+        try await subject.setTOTPLastUsedDate(date2, cipherId: "cipher-2")
+        XCTAssertEqual(appSettingsStore.totpLastUsedDatesByUserId["1"], ["cipher-1": date1, "cipher-2": date2])
+
+        try await subject.setTOTPLastUsedDate(date2, cipherId: "cipher-1")
+        XCTAssertEqual(appSettingsStore.totpLastUsedDatesByUserId["1"], ["cipher-1": date2, "cipher-2": date2])
+    }
+
+    /// `setTOTPLastUsedDate(_:cipherId:)` evicts the least recently used entries once the maximum
+    /// number of tracked ciphers is exceeded.
+    func test_setTOTPLastUsedDate_evictsOldest() async throws {
+        await subject.addAccount(.fixture())
+        let baseDate = Date(year: 2025, month: 1, day: 1)
+        var dates = [String: Date]()
+        for index in 0 ..< Constants.maxTOTPLastUsedDates {
+            dates["cipher-\(index)"] = baseDate.addingTimeInterval(TimeInterval(index))
+        }
+        appSettingsStore.totpLastUsedDatesByUserId["1"] = dates
+
+        let newDate = baseDate.addingTimeInterval(TimeInterval(Constants.maxTOTPLastUsedDates))
+        try await subject.setTOTPLastUsedDate(newDate, cipherId: "cipher-new")
+
+        let storedDates = try XCTUnwrap(appSettingsStore.totpLastUsedDatesByUserId["1"])
+        XCTAssertEqual(storedDates.count, Constants.maxTOTPLastUsedDates)
+        XCTAssertNil(storedDates["cipher-0"])
+        XCTAssertEqual(storedDates["cipher-new"], newDate)
     }
 
     /// `setTwoFactorToken(_:email:)` sets the two-factor code for the email.

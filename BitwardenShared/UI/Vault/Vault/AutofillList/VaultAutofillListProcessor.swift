@@ -519,6 +519,7 @@ class VaultAutofillListProcessor: StateProcessor<// swiftlint:disable:this type_
             coordinator.navigate(to: .autofillListForGroup(group))
         case let .totp(_, totpModel):
             if #available(iOSApplicationExtension 18.0, *) {
+                await services.vaultRepository.recordTOTPUsage(cipherId: totpModel.id)
                 credentialProviderExtensionDelegate?.completeOTPRequest(code: totpModel.totpCode.code)
             }
         }

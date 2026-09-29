@@ -166,6 +166,13 @@ public protocol VaultRepository: AnyObject {
     ///
     func migratePersonalVault(to organizationId: String) async throws
 
+    /// Records that a cipher's TOTP code was used (copied or autofilled) on this device, which is
+    /// used to sort the verification codes list by recency.
+    ///
+    /// - Parameter cipherId: The ID of the cipher whose TOTP code was used.
+    ///
+    func recordTOTPUsage(cipherId: String?) async
+
     /// Regenerates the TOTP code for a given key.
     ///
     /// - Parameter key: The key for a TOTP code.
@@ -773,6 +780,15 @@ extension DefaultVaultRepository: VaultRepository {
     func needsSync() async throws -> Bool {
         let userId = try await stateService.getActiveAccountId()
         return try await syncService.needsSync(for: userId, onlyCheckLocalData: true)
+    }
+
+    func recordTOTPUsage(cipherId: String?) async {
+        guard let cipherId else { return }
+        do {
+            try await stateService.setTOTPLastUsedDate(timeProvider.presentTime, cipherId: cipherId)
+        } catch {
+            errorReporter.log(error: error)
+        }
     }
 
     func refreshTOTPCode(for key: TOTPKeyModel) async throws -> LoginTOTPState {

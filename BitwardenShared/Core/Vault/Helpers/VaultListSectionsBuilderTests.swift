@@ -352,6 +352,40 @@ class VaultListSectionsBuilderTests: BitwardenTestCase { // swiftlint:disable:th
         }
     }
 
+    /// `addGroupSection()` adds the group section with the items ordered by most recently used
+    /// when there are TOTP last used dates, falling back to ordering by name.
+    func test_addGroupSection_totpLastUsedDates() {
+        setUpSubject(
+            withData: VaultListPreparedData(
+                groupItems: [
+                    .fixture(cipherListView: .fixture(id: "1", name: "Amazon")),
+                    .fixture(cipherListView: .fixture(id: "2", name: "GitHub")),
+                    .fixture(cipherListView: .fixture(id: "3", name: "Slack")),
+                    .fixture(cipherListView: .fixture(id: "4", name: "Dropbox")),
+                    .fixture(cipherListView: .fixture(id: "5", name: "Zoom")),
+                ],
+                totpLastUsedDates: [
+                    "2": Date(year: 2025, month: 1, day: 1),
+                    "5": Date(year: 2025, month: 3, day: 1),
+                    "4": Date(year: 2025, month: 2, day: 1),
+                ],
+            ),
+        )
+
+        let vaultListData = subject.addGroupSection().build()
+
+        assertInlineSnapshot(of: vaultListData.sections.dump(), as: .lines) {
+            """
+            Section[Items]: Items
+              - Cipher: Zoom
+              - Cipher: Dropbox
+              - Cipher: GitHub
+              - Cipher: Amazon
+              - Cipher: Slack
+            """
+        }
+    }
+
     /// `addGroupSection()` adds nothing if there are no group items in the prepared data.
     func test_addGroupSection_empty() {
         setUpSubject(

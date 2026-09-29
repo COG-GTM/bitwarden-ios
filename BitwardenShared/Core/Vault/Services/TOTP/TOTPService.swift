@@ -31,6 +31,8 @@ struct DefaultTOTPService: TOTPService {
     private let pasteboardService: PasteboardService
     /// The service used by the application to manage account state.
     private let stateService: StateService
+    /// Provides the present time.
+    private let timeProvider: TimeProvider
 
     // MARK: Init
 
@@ -39,14 +41,17 @@ struct DefaultTOTPService: TOTPService {
     ///   - clientService: The service used by the application to handle encryption and decryption tasks.
     ///   - pasteboardService: The service used by the application for sharing data with other apps.
     ///   - stateService: The service used by the application to manage account state.
+    ///   - timeProvider: Provides the present time.
     init(
         clientService: ClientService,
         pasteboardService: PasteboardService,
         stateService: StateService,
+        timeProvider: TimeProvider,
     ) {
         self.clientService = clientService
         self.pasteboardService = pasteboardService
         self.stateService = stateService
+        self.timeProvider = timeProvider
     }
 
     // MARK: Methods
@@ -67,6 +72,9 @@ struct DefaultTOTPService: TOTPService {
 
         let codeModel = try await clientService.vault().generateTOTPCode(for: totp, date: nil)
         pasteboardService.copy(codeModel.code)
+        if let cipherId = cipher.id {
+            try await stateService.setTOTPLastUsedDate(timeProvider.presentTime, cipherId: cipherId)
+        }
     }
 
     func getTOTPConfiguration(key: String?) throws -> TOTPKeyModel {

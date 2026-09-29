@@ -322,7 +322,15 @@ struct DefaultVaultListDataPreparator: VaultListDataPreparator { // swiftlint:di
             preparedDataBuilder = await preparedDataBuilder.addItem(forGroup: group, with: decryptedCipher)
         }
 
-        return preparedDataBuilder.build()
+        var preparedData = preparedDataBuilder.build()
+        if case .totp = group {
+            do {
+                preparedData.totpLastUsedDates = try await stateService.getTOTPLastUsedDates()
+            } catch {
+                errorReporter.log(error: error)
+            }
+        }
+        return preparedData
     }
 
     func prepareSearchAutofillCombinedMultipleData(

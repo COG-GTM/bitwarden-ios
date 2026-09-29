@@ -11,7 +11,8 @@ extension [VaultListItem] {
         return result
     }
 
-    /// Update the array with a batch of possible updates.
+    /// Update the array with a batch of possible updates, preserving the order of the existing items.
+    /// Any new values are appended to the end of the array, sorted by name.
     ///
     /// - Parameters:
     ///   - updatedValues: An array of updates to make the items are found in the current array.
@@ -22,14 +23,14 @@ extension [VaultListItem] {
         with updatedValues: [VaultListItem],
         includeNewValues: Bool = false,
     ) -> [VaultListItem] {
-        var result = byId()
-        updatedValues.forEach { new in
-            if includeNewValues || result.keys.contains(new.id) {
-                result[new.id] = new
-            }
-        }
-        return result.values
+        let updatedById = updatedValues.byId()
+        let existingIds = Set(map(\.id))
+        let existingItems = map { updatedById[$0.id] ?? $0 }
+        guard includeNewValues else { return existingItems }
+        let newItems = updatedValues
+            .filter { !existingIds.contains($0.id) }
             .sorted { $0.sortValue.localizedStandardCompare($1.sortValue) == .orderedAscending }
+        return existingItems + newItems
     }
 }
 

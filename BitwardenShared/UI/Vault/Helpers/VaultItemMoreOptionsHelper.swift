@@ -161,10 +161,14 @@ class DefaultVaultItemMoreOptionsHelper: VaultItemMoreOptionsHelper {
 
     /// Generates and copies a TOTP code for the cipher's TOTP key.
     ///
-    /// - Parameter totpKey: The TOTP key used to generate a TOTP code.
+    /// - Parameters:
+    ///   - totpKey: The TOTP key used to generate a TOTP code.
+    ///   - cipherId: The ID of the cipher that the TOTP code belongs to.
+    ///   - handleDisplayToast: A closure called to display a toast.
     ///
     private func generateAndCopyTotpCode(
         totpKey: TOTPKeyModel,
+        cipherId: String?,
         handleDisplayToast: @escaping (Toast) -> Void,
     ) async {
         do {
@@ -173,6 +177,7 @@ class DefaultVaultItemMoreOptionsHelper: VaultItemMoreOptionsHelper {
                 throw TOTPServiceError.unableToGenerateCode(nil)
             }
             services.pasteboardService.copy(code)
+            await services.vaultRepository.recordTOTPUsage(cipherId: cipherId)
             handleDisplayToast(
                 Toast(title: Localizations.valueHasBeenCopied(Localizations.verificationCodeTotp)),
             )
@@ -231,7 +236,11 @@ class DefaultVaultItemMoreOptionsHelper: VaultItemMoreOptionsHelper {
             }
         case let .copyTotp(totpKey):
             await masterPasswordRepromptHelper.repromptForMasterPasswordIfNeeded(cipherView: cipherView) {
-                await self.generateAndCopyTotpCode(totpKey: totpKey, handleDisplayToast: handleDisplayToast)
+                await self.generateAndCopyTotpCode(
+                    totpKey: totpKey,
+                    cipherId: cipherView.id,
+                    handleDisplayToast: handleDisplayToast,
+                )
             }
         case let .edit(cipherView):
             await masterPasswordRepromptHelper.repromptForMasterPasswordIfNeeded(cipherView: cipherView) {

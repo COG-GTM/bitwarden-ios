@@ -1376,6 +1376,31 @@ class VaultRepositoryTests: BitwardenTestCase { // swiftlint:disable:this type_b
         }
     }
 
+    /// `recordTOTPUsage(cipherId:)` records the present time as the TOTP last used date for the cipher.
+    func test_recordTOTPUsage() async {
+        stateService.activeAccount = .fixture()
+
+        await subject.recordTOTPUsage(cipherId: "cipher-1")
+
+        XCTAssertEqual(stateService.totpLastUsedDates["1"], ["cipher-1": timeProvider.presentTime])
+    }
+
+    /// `recordTOTPUsage(cipherId:)` does nothing if the cipher ID is `nil`.
+    func test_recordTOTPUsage_nilCipherId() async {
+        stateService.activeAccount = .fixture()
+
+        await subject.recordTOTPUsage(cipherId: nil)
+
+        XCTAssertTrue(stateService.totpLastUsedDates.isEmpty)
+    }
+
+    /// `recordTOTPUsage(cipherId:)` logs an error if there isn't an active account.
+    func test_recordTOTPUsage_error() async {
+        await subject.recordTOTPUsage(cipherId: "cipher-1")
+
+        XCTAssertEqual(errorReporter.errors as? [StateServiceError], [.noActiveAccount])
+    }
+
     /// `refreshTOTPCode(:)` rethrows errors.
     func test_refreshTOTPCode_error() async throws {
         clientService.mockVault.generateTOTPCodeResult = .failure(BitwardenTestError.example)

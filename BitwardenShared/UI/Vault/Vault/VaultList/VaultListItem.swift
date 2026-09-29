@@ -64,6 +64,29 @@ extension VaultListItem {
             name + (model.cipherListView.type.loginListView?.username ?? "") + "\(model.id)"
         }
     }
+
+    /// Returns a comparator that sorts items by their last used date, with the most recently used
+    /// items first. Items without a last used date, or with equal dates, are sorted alphabetically.
+    ///
+    /// - Parameter lastUsedDates: A dictionary mapping item IDs to the date the item was last used.
+    /// - Returns: A comparator that returns `true` if the first item should be ordered before the second.
+    ///
+    static func recencySortComparator(
+        lastUsedDates: [String: Date],
+    ) -> (VaultListItem, VaultListItem) -> Bool {
+        { lhs, rhs in
+            switch (lastUsedDates[lhs.id], lastUsedDates[rhs.id]) {
+            case let (lhsDate?, rhsDate?) where lhsDate != rhsDate:
+                lhsDate > rhsDate
+            case (.some, nil):
+                true
+            case (nil, .some):
+                false
+            default:
+                lhs.sortValue.localizedStandardCompare(rhs.sortValue) == .orderedAscending
+            }
+        }
+    }
 }
 
 extension VaultListItem {

@@ -339,9 +339,11 @@ class DefaultVaultListSectionsBuilder: VaultListSectionsBuilder { // swiftlint:d
             vaultListData.sections.append(
                 VaultListSection(
                     id: "Items",
-                    items: preparedData
-                        .groupItems
-                        .sorted(using: VaultListItem.defaultSortDescriptor),
+                    items: preparedData.totpLastUsedDates.isEmpty
+                        ? preparedData.groupItems.sorted(using: VaultListItem.defaultSortDescriptor)
+                        : preparedData.groupItems.sorted(
+                            by: VaultListItem.recencySortComparator(lastUsedDates: preparedData.totpLastUsedDates),
+                        ),
                     name: Localizations.items,
                 ),
             )
@@ -540,4 +542,7 @@ struct VaultListPreparedData {
 
     /// The count of items with TOTP codes in the vault.
     var totpItemsCount: Int = 0
+
+    /// A dictionary mapping cipher IDs to the date the cipher's TOTP code was last used on this device.
+    var totpLastUsedDates: [String: Date] = [:]
 } // swiftlint:disable:this file_length

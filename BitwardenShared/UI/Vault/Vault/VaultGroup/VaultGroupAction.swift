@@ -16,7 +16,11 @@ enum VaultGroupAction: Equatable, Sendable {
 
     /// The copy TOTP Code button was pressed.
     ///
-    case copyTOTPCode(_ code: String)
+    /// - Parameters:
+    ///   - code: The TOTP code to copy.
+    ///   - cipherId: The ID of the cipher that the TOTP code belongs to.
+    ///
+    case copyTOTPCode(_ code: String, cipherId: String)
 
     /// An item in the vault group was tapped.
     ///

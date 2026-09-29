@@ -597,6 +597,14 @@ extension DefaultAutofillCredentialService: AutofillCredentialService {
             cipherId: cipher.id,
         )
 
+        if let cipherId = cipher.id {
+            do {
+                try await stateService.setTOTPLastUsedDate(timeProvider.presentTime, cipherId: cipherId)
+            } catch {
+                errorReporter.log(error: error)
+            }
+        }
+
         return ASOneTimeCodeCredential(code: code.code)
     }
 

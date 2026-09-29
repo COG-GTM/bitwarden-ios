@@ -329,6 +329,11 @@ private extension ViewItemProcessor {
                 )
             }
         }
+        if field == .totp {
+            Task {
+                await services.vaultRepository.recordTOTPUsage(cipherId: cipherState.cipher.id)
+            }
+        }
     }
 
     /// Download the attachment.

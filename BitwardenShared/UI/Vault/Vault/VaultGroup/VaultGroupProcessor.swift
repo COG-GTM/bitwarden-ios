@@ -172,9 +172,12 @@ final class VaultGroupProcessor: StateProcessor<// swiftlint:disable:this type_b
             )
         case .clearURL:
             state.url = nil
-        case let .copyTOTPCode(code):
+        case let .copyTOTPCode(code, cipherId):
             services.pasteboardService.copy(code)
             state.toast = Toast(title: Localizations.valueHasBeenCopied(Localizations.verificationCode))
+            Task {
+                await services.vaultRepository.recordTOTPUsage(cipherId: cipherId)
+            }
         case let .itemPressed(item):
             switch item.itemType {
             case let .cipher(cipherListView, _):

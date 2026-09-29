@@ -261,8 +261,8 @@ struct VaultGroupView: View {
                 },
                 mapAction: { action in
                     switch action {
-                    case let .copyTOTPCode(code):
-                        .copyTOTPCode(code)
+                    case let .copyTOTPCode(code, cipherId):
+                        .copyTOTPCode(code, cipherId: cipherId)
                     }
                 },
                 mapEffect: { effect in

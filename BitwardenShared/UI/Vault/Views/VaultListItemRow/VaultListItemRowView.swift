@@ -174,7 +174,7 @@ struct VaultListItemRowView: View {
                 .foregroundColor(SharedAsset.Colors.textPrimary.swiftUIColor)
             if store.state.showTotpCopyButton {
                 Button {
-                    store.send(.copyTOTPCode(model.totpCode.code))
+                    store.send(.copyTOTPCode(model.totpCode.code, cipherId: model.id))
                 } label: {
                     SharedAsset.Icons.copy24.swiftUIImage
                 }

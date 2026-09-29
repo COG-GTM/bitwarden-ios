@@ -57,6 +57,9 @@ extension Constants {
     /// The maximum number of passwords stored in history.
     static let maxPasswordsInHistory = 100
 
+    /// The maximum number of ciphers to track TOTP last used dates for on this device.
+    static let maxTOTPLastUsedDates = 200
+
     /// The maximum number of unsuccessful attempts the user can make to unlock
     static let maxUnlockUnsuccessfulAttempts = 5
 

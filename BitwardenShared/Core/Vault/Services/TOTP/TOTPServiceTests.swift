@@ -15,6 +15,7 @@ final class TOTPServiceTests: BitwardenTestCase {
     var pasteboardService: MockPasteboardService!
     var stateService: MockStateService!
     var subject: DefaultTOTPService!
+    var timeProvider: MockTimeProvider!
 
     // MARK: Setup & Teardown
 
@@ -24,11 +25,13 @@ final class TOTPServiceTests: BitwardenTestCase {
         clientService = MockClientService()
         pasteboardService = MockPasteboardService()
         stateService = MockStateService()
+        timeProvider = MockTimeProvider(.mockTime(Date(year: 2025, month: 1, day: 1)))
 
         subject = DefaultTOTPService(
             clientService: clientService,
             pasteboardService: pasteboardService,
             stateService: stateService,
+            timeProvider: timeProvider,
         )
     }
 
@@ -39,6 +42,7 @@ final class TOTPServiceTests: BitwardenTestCase {
         pasteboardService = nil
         stateService = nil
         subject = nil
+        timeProvider = nil
     }
 
     // MARK: Tests
@@ -56,6 +60,21 @@ final class TOTPServiceTests: BitwardenTestCase {
         try await subject.copyTotpIfPossible(cipher: cipher)
 
         XCTAssertEqual(pasteboardService.copiedString, "123456")
+    }
+
+    /// `copyTotpIfPossible(cipher:)` records the TOTP last used date for the cipher after copying.
+    func test_copyTotpIfPossible_recordsLastUsedDate() async throws {
+        let cipher = CipherView.fixture(
+            id: "cipher-1",
+            login: .fixture(
+                totp: "totp",
+            ),
+        )
+        stateService.activeAccount = .fixture()
+
+        try await subject.copyTotpIfPossible(cipher: cipher)
+
+        XCTAssertEqual(stateService.totpLastUsedDates["1"], ["cipher-1": timeProvider.presentTime])
     }
 
     /// `copyTotpIfPossible(cipher:)` succeeds copying the code when account is not Premium

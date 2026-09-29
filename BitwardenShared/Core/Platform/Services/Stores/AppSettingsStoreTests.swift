@@ -1191,6 +1191,27 @@ class AppSettingsStoreTests: BitwardenTestCase { // swiftlint:disable:this type_
         XCTAssertFalse(userDefaults.bool(forKey: "bwPreferencesStorage:shouldSyncToAuthenticator_2"))
     }
 
+    /// `totpLastUsedDates(userId:)` returns an empty dictionary if there isn't a previously stored value.
+    func test_totpLastUsedDates_isInitiallyEmpty() {
+        XCTAssertEqual(subject.totpLastUsedDates(userId: "1"), [:])
+    }
+
+    /// `totpLastUsedDates(userId:)` can be used to get the TOTP last used dates for a user.
+    func test_totpLastUsedDates_withValue() {
+        let date1 = Date(year: 2025, month: 1, day: 1)
+        let date2 = Date(year: 2025, month: 2, day: 1)
+        subject.setTOTPLastUsedDates(["cipher-1": date1, "cipher-2": date2], userId: "1")
+        subject.setTOTPLastUsedDates(["cipher-3": date2], userId: "2")
+
+        XCTAssertEqual(subject.totpLastUsedDates(userId: "1"), ["cipher-1": date1, "cipher-2": date2])
+        XCTAssertEqual(subject.totpLastUsedDates(userId: "2"), ["cipher-3": date2])
+        XCTAssertNotNil(userDefaults.string(forKey: "bwPreferencesStorage:totpLastUsedDates_1"))
+
+        subject.setTOTPLastUsedDates(nil, userId: "1")
+        XCTAssertEqual(subject.totpLastUsedDates(userId: "1"), [:])
+        XCTAssertNil(userDefaults.string(forKey: "bwPreferencesStorage:totpLastUsedDates_1"))
+    }
+
     /// `twoFactorToken(email:)` returns `nil` if there isn't a previously stored value.
     func test_twoFactorToken_isInitiallyNil() {
         XCTAssertNil(subject.twoFactorToken(email: "anything@email.com"))

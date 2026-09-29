@@ -448,6 +448,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
             toastToDisplay,
             Toast(title: Localizations.valueHasBeenCopied(Localizations.verificationCodeTotp)),
         )
+        XCTAssertEqual(vaultRepository.recordTOTPUsageCipherIds, ["1"])
     }
 
     /// `showMoreOptionsAlert()` and press `copyTotp` logs an error if refreshing the TOTP code

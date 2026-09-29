@@ -92,6 +92,7 @@ class AutofillHelper {
                 let key = TOTPKeyModel(authenticatorKey: totp)
                 if let codeModel = try await services.vaultRepository.refreshTOTPCode(for: key).codeModel {
                     services.pasteboardService.copy(codeModel.code)
+                    await services.vaultRepository.recordTOTPUsage(cipherId: cipherView.id)
                 }
             }
         } catch {
@@ -238,6 +239,7 @@ class AutofillHelper {
                         let response = try await self.services.vaultRepository.refreshTOTPCode(for: key)
                         if let code = response.codeModel?.code {
                             self.services.pasteboardService.copy(code)
+                            await self.services.vaultRepository.recordTOTPUsage(cipherId: cipherView.id)
                             showToast(Localizations.valueHasBeenCopied(Localizations.verificationCodeTotp))
                         } else {
                             self.coordinator.showAlert(.defaultAlert(title: Localizations.anErrorHasOccurred))

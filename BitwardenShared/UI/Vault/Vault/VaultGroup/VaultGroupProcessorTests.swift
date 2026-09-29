@@ -944,15 +944,18 @@ class VaultGroupProcessorTests: BitwardenTestCase { // swiftlint:disable:this ty
         XCTAssertNil(subject.state.url)
     }
 
-    /// `receive` with `.copyTOTPCode` copies the value with the pasteboard service.
+    /// `receive` with `.copyTOTPCode` copies the value with the pasteboard service and records
+    /// the TOTP usage for the cipher.
     @MainActor
     func test_receive_copyTOTPCode() {
-        subject.receive(.copyTOTPCode("123456"))
+        subject.receive(.copyTOTPCode("123456", cipherId: "1"))
         XCTAssertEqual(pasteboardService.copiedString, "123456")
         XCTAssertEqual(
             subject.state.toast,
             Toast(title: Localizations.valueHasBeenCopied(Localizations.verificationCode)),
         )
+        waitFor(!vaultRepository.recordTOTPUsageCipherIds.isEmpty)
+        XCTAssertEqual(vaultRepository.recordTOTPUsageCipherIds, ["1"])
     }
 
     /// `receive(_:)` with `.itemPressed` on a cipher navigates to the `.viewItem` route.

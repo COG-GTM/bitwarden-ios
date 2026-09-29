@@ -131,6 +131,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     var syncToAuthenticatorByUserId = [String: Bool]()
     var syncToAuthenticatorResult: Result<Void, Error> = .success(())
     var syncToAuthenticatorSubject = CurrentValueSubject<(String?, Bool), Never>((nil, false))
+    var totpLastUsedDates = [String: [String: Date]]()
     var twoFactorTokens = [String: String]()
     var updateProfileResponse: ProfileResponseModel?
     var updateProfileUserId: String?
@@ -482,6 +483,11 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     func getTimeoutAction(userId: String?) async throws -> SessionTimeoutAction {
         let userId = try unwrapUserId(userId)
         return timeoutAction[userId] ?? .lock
+    }
+
+    func getTOTPLastUsedDates(userId: String?) async throws -> [String: Date] {
+        let userId = try unwrapUserId(userId)
+        return totpLastUsedDates[userId] ?? [:]
     }
 
     func getTwoFactorToken(email: String) async -> String? {
@@ -863,6 +869,12 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     func setTimeoutAction(action: SessionTimeoutAction, userId: String?) async throws {
         let userId = try unwrapUserId(userId)
         timeoutAction[userId] = action
+    }
+
+    @MainActor
+    func setTOTPLastUsedDate(_ date: Date, cipherId: String, userId: String?) async throws {
+        let userId = try unwrapUserId(userId)
+        totpLastUsedDates[userId, default: [:]][cipherId] = date
     }
 
     func setTokens(accessToken: String, refreshToken: String, userId _: String?) async throws {

@@ -285,7 +285,7 @@ private struct SearchableVaultListView: View {
                 },
                 mapAction: { action in
                     switch action {
-                    case let .copyTOTPCode(code):
+                    case let .copyTOTPCode(code, _):
                         .copyTOTPCode(code)
                     }
                 },

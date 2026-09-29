@@ -139,7 +139,7 @@ class VaultGroupViewTests: BitwardenTestCase {
         let button = try subject.inspect().find(buttonWithAccessibilityLabel: Localizations.copyTotp)
         try button.tap()
         waitFor(!processor.dispatchedActions.isEmpty)
-        XCTAssertEqual(processor.dispatchedActions.last, .copyTOTPCode("123456"))
+        XCTAssertEqual(processor.dispatchedActions.last, .copyTOTPCode("123456", cipherId: "123"))
     }
 
     /// Tapping the more button on a vault item dispatches the `.morePressed` action.

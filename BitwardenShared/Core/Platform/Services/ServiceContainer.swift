@@ -836,6 +836,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             clientService: clientService,
             pasteboardService: pasteboardService,
             stateService: stateService,
+            timeProvider: timeProvider,
         )
 
         let authService = DefaultAuthService(

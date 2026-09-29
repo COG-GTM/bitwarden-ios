@@ -98,6 +98,8 @@ class MockVaultRepository: VaultRepository { // swiftlint:disable:this type_body
     var organizationsPublisherError: Error?
     var organizationsSubject = CurrentValueSubject<[Organization], Error>([])
 
+    var recordTOTPUsageCipherIds = [String?]()
+
     var refreshTOTPCodesCalled = false
     var refreshTOTPCodesResult: Result<[VaultListItem], Error> = .success([])
     var refreshedTOTPTime: Date?
@@ -299,6 +301,10 @@ class MockVaultRepository: VaultRepository { // swiftlint:disable:this type_body
             throw organizationsPublisherError
         }
         return organizationsSubject.eraseToAnyPublisher().values
+    }
+
+    func recordTOTPUsage(cipherId: String?) async {
+        recordTOTPUsageCipherIds.append(cipherId)
     }
 
     func refreshTOTPCode(for key: BitwardenShared.TOTPKeyModel) async throws -> BitwardenShared.LoginTOTPState {

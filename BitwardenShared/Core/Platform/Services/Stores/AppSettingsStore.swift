@@ -635,6 +635,14 @@ protocol AppSettingsStore: AnyObject {
     ///
     func setTimeoutAction(key: SessionTimeoutAction, userId: String)
 
+    /// Sets the dates that each cipher's TOTP code was last used (copied or autofilled) on this device.
+    ///
+    /// - Parameters:
+    ///   - dates: A dictionary mapping cipher IDs to the date the TOTP code was last used.
+    ///   - userId: The user ID associated with the TOTP last used dates.
+    ///
+    func setTOTPLastUsedDates(_ dates: [String: Date]?, userId: String)
+
     /// Sets the two-factor token.
     ///
     /// - Parameters:
@@ -702,6 +710,13 @@ protocol AppSettingsStore: AnyObject {
     /// - Returns: The  user's session timeout action.
     ///
     func timeoutAction(userId: String) -> Int?
+
+    /// Gets the dates that each cipher's TOTP code was last used (copied or autofilled) on this device.
+    ///
+    /// - Parameter userId: The user ID associated with the TOTP last used dates.
+    /// - Returns: A dictionary mapping cipher IDs to the date the TOTP code was last used.
+    ///
+    func totpLastUsedDates(userId: String) -> [String: Date]
 
     /// Get the two-factor token associated with a user's email.
     ///
@@ -921,6 +936,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case syncToAuthenticator(userId: String)
         case state
         case subscriptionAttentionCardVisible(userId: String)
+        case totpLastUsedDates(userId: String)
         case twoFactorToken(email: String)
         case upgradedToPremiumActionCardVisible(userId: String)
         case userKeyId(userId: String)
@@ -1048,6 +1064,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "subscriptionAttentionCardVisible_\(userId)"
             case let .syncToAuthenticator(userId):
                 "shouldSyncToAuthenticator_\(userId)"
+            case let .totpLastUsedDates(userId):
+                "totpLastUsedDates_\(userId)"
             case let .twoFactorToken(email):
                 "twoFactorToken_\(email)"
             case let .upgradedToPremiumActionCardVisible(userId):
@@ -1480,6 +1498,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         store(key, for: .vaultTimeoutAction(userId: userId))
     }
 
+    func setTOTPLastUsedDates(_ dates: [String: Date]?, userId: String) {
+        store(dates, for: .totpLastUsedDates(userId: userId))
+    }
+
     func setTwoFactorToken(_ token: String?, email: String) {
         store(token, for: .twoFactorToken(email: email))
     }
@@ -1514,6 +1536,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
 
     func timeoutAction(userId: String) -> Int? {
         fetch(for: .vaultTimeoutAction(userId: userId))
+    }
+
+    func totpLastUsedDates(userId: String) -> [String: Date] {
+        fetch(for: .totpLastUsedDates(userId: userId)) ?? [:]
     }
 
     func twoFactorToken(email: String) -> String? {

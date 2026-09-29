@@ -1234,6 +1234,33 @@ class VaultListDataPreparatorTests: BitwardenTestCase { // swiftlint:disable:thi
         XCTAssertNotNil(result)
     }
 
+    /// `prepareGroupData(from:collections:folders:filter:)` includes the TOTP last used dates
+    /// when preparing data for the TOTP group.
+    func test_prepareGroupData_totpLastUsedDates() async throws {
+        ciphersClientWrapperService.decryptAndProcessCiphersInBatchOnCipherParameterToPass = .fixture(
+            id: "1",
+        )
+        let date = Date(year: 2025, month: 1, day: 1)
+        stateService.activeAccount = .fixture()
+        stateService.totpLastUsedDates["1"] = ["1": date]
+
+        let totpResult = await subject.prepareGroupData(
+            from: [.fixture()],
+            collections: [],
+            folders: [],
+            filter: VaultListFilter(group: .totp),
+        )
+        XCTAssertEqual(totpResult?.totpLastUsedDates, ["1": date])
+
+        let loginResult = await subject.prepareGroupData(
+            from: [.fixture()],
+            collections: [],
+            folders: [],
+            filter: VaultListFilter(group: .login),
+        )
+        XCTAssertEqual(loginResult?.totpLastUsedDates, [:])
+    }
+
     /// `prepareGroupData(from:collections:folders:filter:)` returns the prepared data
     /// when not filtering by folder nor collection.
     func test_prepareGroupData_nonFolderNonCollection() async throws {

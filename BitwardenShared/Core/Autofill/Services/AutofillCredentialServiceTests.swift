@@ -780,6 +780,7 @@ class AutofillCredentialServiceTests: BitwardenTestCase { // swiftlint:disable:t
         )
 
         XCTAssertEqual(credential.code, "123456")
+        XCTAssertEqual(stateService.totpLastUsedDates["1"]?.keys.sorted(), ["1"])
     }
 
     /// `provideOTPCredential(for:autofillCredentialServiceDelegate:repromptPasswordValidated:)`

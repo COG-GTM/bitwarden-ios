@@ -72,6 +72,7 @@ class MockAppSettingsStore: AppSettingsStore { // swiftlint:disable:this type_bo
     var siriAndShortcutsAccess = [String: Bool]()
     var syncToAuthenticatorByUserId = [String: Bool]()
     var timeoutAction = [String: Int]()
+    var totpLastUsedDatesByUserId = [String: [String: Date]]()
     var twoFactorTokens = [String: String]()
     var userKeyIdByUserId = [String: String]()
     var usesKeyConnector = [String: Bool]()
@@ -422,6 +423,10 @@ class MockAppSettingsStore: AppSettingsStore { // swiftlint:disable:this type_bo
         timeoutAction[userId] = key.rawValue
     }
 
+    func setTOTPLastUsedDates(_ dates: [String: Date]?, userId: String) {
+        totpLastUsedDatesByUserId[userId] = dates
+    }
+
     func setTwoFactorToken(_ token: String?, email: String) {
         twoFactorTokens[email] = token
     }
@@ -472,6 +477,10 @@ class MockAppSettingsStore: AppSettingsStore { // swiftlint:disable:this type_bo
 
     func timeoutAction(userId: String) -> Int? {
         timeoutAction[userId]
+    }
+
+    func totpLastUsedDates(userId: String) -> [String: Date] {
+        totpLastUsedDatesByUserId[userId] ?? [:]
     }
 
     func unsuccessfulUnlockAttempts(userId: String) -> Int {

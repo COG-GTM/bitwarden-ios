@@ -380,6 +380,13 @@ protocol StateService: AnyObject, DebugStateService {
     ///
     func getTimeoutAction(userId: String?) async throws -> SessionTimeoutAction
 
+    /// Gets the dates that each cipher's TOTP code was last used (copied or autofilled) on this device.
+    ///
+    /// - Parameter userId: The user ID of the account. Defaults to the active account if `nil`.
+    /// - Returns: A dictionary mapping cipher IDs to the date the TOTP code was last used.
+    ///
+    func getTOTPLastUsedDates(userId: String?) async throws -> [String: Date]
+
     /// Get the two-factor token (non-nil if the user selected the "remember me" option).
     ///
     /// - Parameter email: The user's email address.
@@ -816,6 +823,15 @@ protocol StateService: AnyObject, DebugStateService {
     ///
     func setTimeoutAction(action: SessionTimeoutAction, userId: String?) async throws
 
+    /// Records the date that a cipher's TOTP code was last used (copied or autofilled) on this device.
+    ///
+    /// - Parameters:
+    ///   - date: The date the TOTP code was used.
+    ///   - cipherId: The ID of the cipher whose TOTP code was used.
+    ///   - userId: The user ID of the account. Defaults to the active account if `nil`.
+    ///
+    func setTOTPLastUsedDate(_ date: Date, cipherId: String, userId: String?) async throws
+
     /// Sets the user's two-factor token.
     ///
     /// - Parameters:
@@ -1176,6 +1192,15 @@ extension StateService {
         try await getTimeoutAction(userId: nil)
     }
 
+    /// Gets the dates that each cipher's TOTP code was last used (copied or autofilled) on this
+    /// device for the active account.
+    ///
+    /// - Returns: A dictionary mapping cipher IDs to the date the TOTP code was last used.
+    ///
+    func getTOTPLastUsedDates() async throws -> [String: Date] {
+        try await getTOTPLastUsedDates(userId: nil)
+    }
+
     /// Gets whether a user has a master password.
     ///
     /// - Returns: Whether the user has a master password.
@@ -1458,6 +1483,17 @@ extension StateService {
     ///
     func setTimeoutAction(action: SessionTimeoutAction) async throws {
         try await setTimeoutAction(action: action, userId: nil)
+    }
+
+    /// Records the date that a cipher's TOTP code was last used (copied or autofilled) on this
+    /// device for the active account.
+    ///
+    /// - Parameters:
+    ///   - date: The date the TOTP code was used.
+    ///   - cipherId: The ID of the cipher whose TOTP code was used.
+    ///
+    func setTOTPLastUsedDate(_ date: Date, cipherId: String) async throws {
+        try await setTOTPLastUsedDate(date, cipherId: cipherId, userId: nil)
     }
 
     /// Sets the username generation options for the active account.
@@ -1929,6 +1965,11 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         return timeoutAction
     }
 
+    func getTOTPLastUsedDates(userId: String?) async throws -> [String: Date] {
+        let userId = try userId ?? getActiveAccountUserId()
+        return appSettingsStore.totpLastUsedDates(userId: userId)
+    }
+
     func getTwoFactorToken(email: String) async -> String? {
         appSettingsStore.twoFactorToken(email: email)
     }
@@ -2346,6 +2387,21 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     func setTimeoutAction(action: SessionTimeoutAction, userId: String?) async throws {
         let userId = try userId ?? getActiveAccountUserId()
         appSettingsStore.setTimeoutAction(key: action, userId: userId)
+    }
+
+    func setTOTPLastUsedDate(_ date: Date, cipherId: String, userId: String?) async throws {
+        let userId = try userId ?? getActiveAccountUserId()
+        var dates = appSettingsStore.totpLastUsedDates(userId: userId)
+        dates[cipherId] = date
+        if dates.count > Constants.maxTOTPLastUsedDates {
+            dates = Dictionary(
+                uniqueKeysWithValues: dates
+                    .sorted { $0.value > $1.value }
+                    .prefix(Constants.maxTOTPLastUsedDates)
+                    .map { ($0.key, $0.value) },
+            )
+        }
+        appSettingsStore.setTOTPLastUsedDates(dates, userId: userId)
     }
 
     func setTwoFactorToken(_ token: String?, email: String) async {

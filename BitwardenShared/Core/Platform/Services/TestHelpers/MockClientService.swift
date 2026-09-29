@@ -6,28 +6,31 @@ import BitwardenSdkMocks
 @testable import BitwardenShared
 
 class MockClientService: ClientService {
-    var mockAuth: MockAuthClient
+    var mockAuth: MockAuthClientService
     var mockAuthIsPreAuth = false
     var mockAuthUserId: String?
-    var mockCrypto: MockCryptoClient
+    var mockCrypto: MockCryptoClientProtocol
     var mockExporters: MockExporterClientProtocol
     var mockGenerators: MockGeneratorClientsProtocol
     var mockGeneratorsIsPreAuth = false
     var mockGeneratorsUserId: String?
     var mockPlatform: MockPlatformClientService
     var mockPlatformIsPreAuth = false
+    var mockPolicies: MockPoliciesClientProtocol
     var mockSends: MockSendClientProtocol
     var mockVault: MockVaultClientService
     var platformCallCount = 0
     var platformError: Error?
+    var policiesError: Error?
     var userClientArray = [String: BitwardenSdkClient]()
 
     init(
-        auth: MockAuthClient = MockAuthClient(),
-        crypto: MockCryptoClient = MockCryptoClient(),
+        auth: MockAuthClientService = MockAuthClientService(),
+        crypto: MockCryptoClientProtocol = MockCryptoClientProtocol(),
         exporters: MockExporterClientProtocol = MockExporterClientProtocol(),
         generators: MockGeneratorClientsProtocol = MockGeneratorClientsProtocol(),
-        platform: MockPlatformClientService = MockPlatformClientService(),
+        platform: MockPlatformClientService = MockPlatformClientService.withMocks(),
+        policies: MockPoliciesClientProtocol = MockPoliciesClientProtocol(),
         sends: MockSendClientProtocol = {
             let mock = MockSendClientProtocol()
             mock.decryptClosure = { SendView(send: $0) }
@@ -42,6 +45,7 @@ class MockClientService: ClientService {
         mockExporters = exporters
         mockGenerators = generators
         mockPlatform = platform
+        mockPolicies = policies
         mockSends = sends
         mockVault = vault
     }
@@ -73,6 +77,11 @@ class MockClientService: ClientService {
         }
         mockPlatformIsPreAuth = isPreAuth
         return mockPlatform
+    }
+
+    func policies(for userId: String?) throws -> PoliciesClientProtocol {
+        if let policiesError { throw policiesError }
+        return mockPolicies
     }
 
     func removeClient(for userId: String?) async throws {

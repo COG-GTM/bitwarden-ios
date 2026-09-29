@@ -1,3 +1,5 @@
+// swiftlint:disable file_length
+
 import BitwardenKit
 import BitwardenSdk
 
@@ -50,6 +52,13 @@ protocol ClientService {
     /// - Returns: A `PlatformClientService` for client platform tasks.
     ///
     func platform(for userId: String?, isPreAuth: Bool) async throws -> PlatformClientService
+
+    /// Returns a `PoliciesClientProtocol` for policy data tasks.
+    ///
+    /// - Parameter userId: The user ID mapped to the client instance.
+    /// - Returns: A `PoliciesClientProtocol` for policy data tasks.
+    ///
+    func policies(for userId: String?) async throws -> PoliciesClientProtocol
 
     /// Removes the user's client from memory.
     ///
@@ -105,6 +114,12 @@ extension ClientService {
         try await generators(for: nil, isPreAuth: isPreAuth)
     }
 
+    /// Returns a `PoliciesClientProtocol` for policy data tasks.
+    ///
+    func policies() async throws -> PoliciesClientProtocol {
+        try await policies(for: nil)
+    }
+
     /// Returns a `PlatformClientService` for client platform tasks.
     ///
     /// - Parameter isPreAuth: Whether the client is being used for a user prior to authentication
@@ -152,6 +167,9 @@ actor DefaultClientService: ClientService {
     /// The factory to create SDK repositories.
     private let sdkRepositoryFactory: SdkRepositoryFactory
 
+    /// The service used to manage the account state the SDK state bridge reads from and writes to.
+    private let sdkStateBridgeStateService: SdkStateBridgeStateService
+
     /// The service used by the application to manage account state.
     private let stateService: StateService
 
@@ -167,6 +185,8 @@ actor DefaultClientService: ClientService {
     ///   - configService: The service to get server-specified configuration.
     ///   - errorReporter: The service used by the application to report non-fatal errors.
     ///   - sdkRepositoryFactory: The factory to create SDK repositories.
+    ///   - sdkStateBridgeStateService: The service used to manage the account state the SDK state
+    ///     bridge reads from and writes to.
     ///   - stateService: The service used by the application to manage account state.
     ///
     init(
@@ -174,12 +194,14 @@ actor DefaultClientService: ClientService {
         configService: ConfigService,
         errorReporter: ErrorReporter,
         sdkRepositoryFactory: SdkRepositoryFactory,
+        sdkStateBridgeStateService: SdkStateBridgeStateService,
         stateService: StateService,
     ) {
         self.clientBuilder = clientBuilder
         self.configService = configService
         self.errorReporter = errorReporter
         self.sdkRepositoryFactory = sdkRepositoryFactory
+        self.sdkStateBridgeStateService = sdkStateBridgeStateService
         self.stateService = stateService
 
         Task {
@@ -215,6 +237,10 @@ actor DefaultClientService: ClientService {
 
     func platform(for userId: String?, isPreAuth: Bool = false) async throws -> PlatformClientService {
         try await client(for: userId, isPreAuth: isPreAuth).platform()
+    }
+
+    func policies(for userId: String?) async throws -> PoliciesClientProtocol {
+        try await client(for: userId).policies()
     }
 
     func removeClient(for userId: String?) async throws {
@@ -284,6 +310,11 @@ actor DefaultClientService: ClientService {
     ///   - client: The SDK client to configure.
     ///   - userId: The user ID the SDK client instance belongs to.
     func configureNewClient(_ client: BitwardenSdkClient, for userId: String) async {
+        client.kmStateBridge().registerBridgeImpl(bridgeImpl: SdkStateBridge(
+            errorReporter: errorReporter,
+            stateService: sdkStateBridgeStateService,
+            userId: userId,
+        ))
         client.platform().state().registerClientManagedRepositories(
             repositories: sdkRepositoryFactory.makeRepositories(userId: userId),
         )
@@ -307,17 +338,12 @@ actor DefaultClientService: ClientService {
     /// - Parameter config: Config to update the flags.
     private func loadFlags(_ config: ServerConfig?, for client: BitwardenSdkClient) async {
         do {
-            guard let config else {
+            guard config != nil else {
                 return
             }
 
-            let cipherKeyEncryptionFlagEnabled: Bool = await configService.getFeatureFlag(
-                .cipherKeyEncryption,
-            )
-            let enableCipherKeyEncryption = cipherKeyEncryptionFlagEnabled && config.supportsCipherKeyEncryption()
-
-            try await client.platform().loadFlags([
-                FeatureFlag.enableCipherKeyEncryption.rawValue: enableCipherKeyEncryption,
+            try await client.platform().loadFlags(flags: [
+                FeatureFlag.enableCipherKeyEncryption.rawValue: true,
             ])
         } catch {
             errorReporter.log(error: error)
@@ -342,8 +368,15 @@ protocol BitwardenSdkClient {
     /// Returns generator operations.
     func generators() -> GeneratorClientsProtocol
 
+    /// Returns the key management state bridge client, used to register the app's
+    /// `StateBridgeForeignImpl` implementation so the SDK can read/write mobile state directly.
+    func kmStateBridge() -> StateBridgeClientProtocol
+
     /// Returns platform operations.
     func platform() -> PlatformClientService
+
+    /// Returns policy operations.
+    func policies() -> PoliciesClientProtocol
 
     /// Returns sends operations.
     func sends() -> SendClientProtocol
@@ -371,8 +404,16 @@ extension Client: BitwardenSdkClient {
         generators() as GeneratorClients
     }
 
+    func kmStateBridge() -> StateBridgeClientProtocol {
+        kmStateBridge() as StateBridgeClient
+    }
+
     func platform() -> PlatformClientService {
         platform() as PlatformClient
+    }
+
+    func policies() -> PoliciesClientProtocol {
+        policies() as PoliciesClient
     }
 
     func sends() -> SendClientProtocol {

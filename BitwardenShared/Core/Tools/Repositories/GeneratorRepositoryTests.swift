@@ -6,13 +6,13 @@ import XCTest
 @testable import BitwardenShared
 @testable import BitwardenSharedMocks
 
-// swiftlint:disable file_length
-
 class GeneratorRepositoryTests: BitwardenTestCase { // swiftlint:disable:this type_body_length
     // MARK: Properties
 
     var clientService: MockClientService!
+    var errorReporter: MockErrorReporter!
     var generatorDataStore: DataStore!
+    var policyService: MockPolicyService!
     var subject: GeneratorRepository!
     var stateService: MockStateService!
 
@@ -22,12 +22,16 @@ class GeneratorRepositoryTests: BitwardenTestCase { // swiftlint:disable:this ty
         super.setUp()
 
         clientService = MockClientService()
-        generatorDataStore = DataStore(errorReporter: MockErrorReporter(), storeType: .memory)
+        errorReporter = MockErrorReporter()
+        generatorDataStore = DataStore(errorReporter: errorReporter, storeType: .memory)
+        policyService = MockPolicyService()
         stateService = MockStateService()
 
         subject = DefaultGeneratorRepository(
             clientService: clientService,
             dataStore: generatorDataStore,
+            errorReporter: errorReporter,
+            policyService: policyService,
             stateService: stateService,
         )
     }
@@ -36,7 +40,9 @@ class GeneratorRepositoryTests: BitwardenTestCase { // swiftlint:disable:this ty
         super.tearDown()
 
         clientService = nil
+        errorReporter = nil
         generatorDataStore = nil
+        policyService = nil
         subject = nil
         stateService = nil
     }
@@ -393,4 +399,4 @@ class GeneratorRepositoryTests: BitwardenTestCase { // swiftlint:disable:this ty
 
         XCTAssertEqual(stateService.usernameGenerationOptions, [account.profile.userId: options])
     }
-}
+} // swiftlint:disable:this file_length

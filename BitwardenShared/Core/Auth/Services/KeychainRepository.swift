@@ -27,6 +27,9 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
     /// The keychain item for device key.
     case deviceKey(userId: String)
 
+    /// The keychain item for the fill-assist cached-rules integrity fingerprint.
+    case fillAssistRulesFingerprint(userId: String)
+
     /// The keychain item for a user's last active boot epoch.
     ///
     /// The boot epoch is `wallTime − monotonicTime` and is used to detect the reboot-timing attack.
@@ -69,6 +72,7 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
              .clientCertificateIdentity,
              .deviceAuthKeyMetadata,
              .deviceKey,
+             .fillAssistRulesFingerprint,
              .lastActiveBootEpoch,
              .lastActiveMonotonicTime,
              .lastActiveTime,
@@ -104,6 +108,7 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
         case .accessToken,
              .authenticatorVaultKey,
              .clientCertificateIdentity,
+             .fillAssistRulesFingerprint,
              .localUserDataKeyStates,
              .refreshToken,
              .serverCommunicationConfig:
@@ -129,6 +134,8 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
             "deviceAuthKey_" + id
         case let .deviceAuthKeyMetadata(userId: id):
             "deviceAuthKeyMetadata_" + id
+        case let .fillAssistRulesFingerprint(userId):
+            "fillAssistRulesFingerprint_\(userId)"
         case let .lastActiveBootEpoch(userId):
             "lastActiveBootEpoch_\(userId)"
         case let .lastActiveMonotonicTime(userId):
@@ -486,6 +493,10 @@ extension DefaultKeychainRepository: BiometricsKeychainRepository {
     func setUserBiometricAuthKey(userId: String, value: String) async throws {
         try await keychainServiceFacade.setValue(value, for: BitwardenKeychainItem.biometrics(userId: userId))
     }
+
+    func userBiometricAuthKeyExists(userId: String) async -> Bool {
+        await keychainServiceFacade.containsValue(for: BitwardenKeychainItem.biometrics(userId: userId))
+    }
 }
 
 // MARK: DeviceAuthKeychainRepository
@@ -500,7 +511,7 @@ extension DefaultKeychainRepository: DeviceAuthKeychainRepository {
         try await keychainServiceFacade.deleteValue(for: BitwardenKeychainItem.deviceAuthKey(userId: userId))
     }
 
-    func getDeviceAuthKey(userId: String) async throws -> DeviceAuthKeyRecord? {
+    func getDeviceAuthKey(userId: String) async throws -> DeviceAuthKeyKeychainRecord? {
         do {
             return try await keychainServiceFacade.getValue(
                 for: BitwardenKeychainItem.deviceAuthKey(userId: userId),
@@ -510,7 +521,7 @@ extension DefaultKeychainRepository: DeviceAuthKeychainRepository {
         }
     }
 
-    func getDeviceAuthKeyMetadata(userId: String) async throws -> DeviceAuthKeyMetadata? {
+    func getDeviceAuthKeyMetadata(userId: String) async throws -> DeviceAuthKeyKeychainMetadata? {
         do {
             return try await keychainServiceFacade.getValue(
                 for: BitwardenKeychainItem.deviceAuthKeyMetadata(userId: userId),
@@ -521,8 +532,8 @@ extension DefaultKeychainRepository: DeviceAuthKeychainRepository {
     }
 
     func setDeviceAuthKey(
-        record: DeviceAuthKeyRecord,
-        metadata: DeviceAuthKeyMetadata,
+        record: DeviceAuthKeyKeychainRecord,
+        metadata: DeviceAuthKeyKeychainMetadata,
         userId: String,
     ) async throws {
         // We want to set metadata last because that's what's used to determine if we're in a

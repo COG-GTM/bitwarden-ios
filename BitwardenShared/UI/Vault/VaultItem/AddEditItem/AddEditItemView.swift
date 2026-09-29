@@ -131,6 +131,7 @@ struct AddEditItemView: View {
                             isMoveToOrganizationEnabled: store.state.canMoveToOrganization,
                             isRestoreEnabled: false,
                             isUnarchiveEnabled: store.state.canBeUnarchived,
+                            isVfo1FoundationFeatureFlagEnabled: store.state.isVfo1FoundationFeatureFlagEnabled,
                             store: store.child(
                                 state: { _ in },
                                 mapAction: { .morePressed($0) },
@@ -184,14 +185,14 @@ struct AddEditItemView: View {
 
             ContentBlock {
                 BitwardenMenuField(
-                    title: Localizations.folder,
+                    title: store.state.folderTitle,
                     options: store.state.folders,
                     selection: store.binding(
                         get: \.folder,
                         send: AddEditItemAction.folderChanged,
                     ),
                     additionalMenu: {
-                        Button(Localizations.newFolder) {
+                        Button(Localizations.addFolder) {
                             store.send(.addFolder)
                         }
                     },
@@ -201,7 +202,7 @@ struct AddEditItemView: View {
                 if store.state.configuration.isAdding, store.state.hasOrganizations, let owner = store.state.owner {
                     ContentBlock(dividerLeadingPadding: 16) {
                         BitwardenMenuField(
-                            title: Localizations.owner,
+                            title: store.state.ownerFieldTitle,
                             accessibilityIdentifier: "ItemOwnershipPicker",
                             options: store.state.ownershipOptions,
                             selection: store.binding(
@@ -297,6 +298,21 @@ private extension AddEditItemView {
 }
 
 private extension AddEditItemView {
+    /// Specific fields for a bank account item.
+    @ViewBuilder private var bankAccountItems: some View {
+        AddEditBankAccountItemView(
+            store: store.child(
+                state: { addEditState in
+                    addEditState.bankAccountItemState
+                },
+                mapAction: { action in
+                    .bankAccountFieldChanged(action)
+                },
+                mapEffect: { $0 },
+            ),
+        )
+    }
+
     /// Specific fields for a card item.
     @ViewBuilder private var cardItems: some View {
         AddEditCardItemView(
@@ -306,6 +322,21 @@ private extension AddEditItemView {
                 },
                 mapAction: { action in
                     .cardFieldChanged(action)
+                },
+                mapEffect: { $0 },
+            ),
+        )
+    }
+
+    /// Specific fields for a driver's license item.
+    @ViewBuilder private var driversLicenseItems: some View {
+        AddEditDriversLicenseItemView(
+            store: store.child(
+                state: { addEditState in
+                    addEditState.driversLicenseItemState
+                },
+                mapAction: { action in
+                    .driversLicenseFieldChanged(action)
                 },
                 mapEffect: { $0 },
             ),
@@ -330,6 +361,12 @@ private extension AddEditItemView {
     /// The specific fields for the type of item being created or updated.
     @ViewBuilder private var itemTypeSection: some View {
         switch store.state.type {
+        case .bankAccount:
+            bankAccountItems
+        case .driversLicense:
+            driversLicenseItems
+        case .passport:
+            passportItems
         case .card:
             cardItems
         case .login:
@@ -366,6 +403,21 @@ private extension AddEditItemView {
                     )),
                 )
             },
+        )
+    }
+
+    /// Specific fields for a passport item.
+    @ViewBuilder private var passportItems: some View {
+        AddEditPassportItemView(
+            store: store.child(
+                state: { addEditState in
+                    addEditState.passportItemState
+                },
+                mapAction: { action in
+                    .passportFieldChanged(action)
+                },
+                mapEffect: { $0 },
+            ),
         )
     }
 
@@ -406,7 +458,7 @@ struct AddEditItemView_Previews: PreviewProvider {
             ),
             hasPremium: true,
         )!
-        state.ownershipOptions = [.personal(email: "user@bitwarden.com")]
+        state.ownershipOptions = [.personal(displayName: "user@bitwarden.com")]
         return state
     }
 
@@ -476,7 +528,7 @@ struct AddEditItemView_Previews: PreviewProvider {
                             ]
                             copy.isFavoriteOn = false
                             copy.isMasterPasswordRePromptOn = true
-                            copy.owner = .personal(email: "security@bitwarden.com")
+                            copy.owner = .personal(displayName: "security@bitwarden.com")
                             return copy.addEditState
                         }(),
                     ),

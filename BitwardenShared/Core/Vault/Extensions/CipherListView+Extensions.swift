@@ -40,10 +40,14 @@ extension CipherListView {
         switch group {
         case .archive:
             archivedDate != nil
+        case .bankAccount:
+            type.isBankAccount
         case .card:
             type.isCard
         case let .collection(id, _, _):
             collectionIds.contains(id)
+        case .driversLicense:
+            type == .driversLicense
         case let .folder(id, _):
             folderId == id
         case .identity:
@@ -52,6 +56,8 @@ extension CipherListView {
             type.isLogin
         case .noFolder:
             folderId == nil
+        case .passport:
+            type == .passport
         case .secureNote:
             type == .secureNote
         case .sshKey:
@@ -129,6 +135,7 @@ extension CipherListView {
         name == Localizations.errorCannotDecrypt
     }
 
+    // swiftlint:disable:next function_body_length
     init(cipherDecryptFailure cipher: Cipher) {
         let type: CipherListViewType = switch cipher.type {
         case .card:
@@ -149,6 +156,17 @@ extension CipherListView {
             .secureNote
         case .sshKey:
             .sshKey
+        case .bankAccount:
+            .bankAccount(
+                BankAccountListView(
+                    accountNumber: nil,
+                    accountType: nil,
+                ),
+            )
+        case .driversLicense:
+            .driversLicense
+        case .passport:
+            .passport
         }
 
         self.init(

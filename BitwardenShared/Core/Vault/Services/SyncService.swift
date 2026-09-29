@@ -78,6 +78,12 @@ protocol SyncService: AnyObject {
     /// - Returns: The organization ID if migration is needed, or `nil` if not.
     ///
     func organizationIdRequiringVaultMigration() async throws -> String?
+
+    /// A publisher for when a sync completes successfully.
+    ///
+    /// Emits after all sync data has been persisted.
+    ///
+    func syncCompletePublisher() -> AsyncPublisher<AnyPublisher<Void, Never>>
 }
 
 extension SyncService {
@@ -170,6 +176,9 @@ class DefaultSyncService: SyncService {
     /// The service to get server-specified configuration.
     private let configService: ConfigService
 
+    /// The repository used by the application to manage fill-assist data.
+    private let fillAssistRepository: FillAssistRepository
+
     /// The service used by the application for recording temporary debug logs.
     private let flightRecorder: FlightRecorder
 
@@ -196,6 +205,9 @@ class DefaultSyncService: SyncService {
 
     /// The API service used to perform sync API requests.
     private let syncAPIService: SyncAPIService
+
+    /// The subject tracking when a sync completes successfully.
+    private let syncCompleteSubject = CurrentValueSubject<Void, Never>(())
 
     /// A delegate of the `SyncService` that is notified if a user's security stamp changes.
     weak var delegate: SyncServiceDelegate?
@@ -240,6 +252,7 @@ class DefaultSyncService: SyncService {
         clientService: ClientService,
         collectionService: CollectionService,
         configService: ConfigService,
+        fillAssistRepository: FillAssistRepository,
         flightRecorder: FlightRecorder,
         folderService: FolderService,
         keyConnectorService: KeyConnectorService,
@@ -259,6 +272,7 @@ class DefaultSyncService: SyncService {
         self.clientService = clientService
         self.collectionService = collectionService
         self.configService = configService
+        self.fillAssistRepository = fillAssistRepository
         self.flightRecorder = flightRecorder
         self.folderService = folderService
         self.keyConnectorService = keyConnectorService
@@ -296,6 +310,10 @@ class DefaultSyncService: SyncService {
         }
 
         return organizationId
+    }
+
+    func syncCompletePublisher() -> AsyncPublisher<AnyPublisher<Void, Never>> {
+        syncCompleteSubject.eraseToAnyPublisher().values
     }
 
     // MARK: Private
@@ -418,9 +436,11 @@ class DefaultSyncService: SyncService {
 }
 
 extension DefaultSyncService {
-    func fetchSync(forceSync: Bool, isPeriodic: Bool) async throws {
+    func fetchSync(forceSync: Bool, isPeriodic: Bool) async throws { // swiftlint:disable:this function_body_length
         let account = try await stateService.getActiveAccount()
         let userId = account.profile.userId
+
+        await fillAssistRepository.syncRules()
 
         guard try await needsSync(forceSync: forceSync, isPeriodic: isPeriodic, userId: userId) else {
             return
@@ -435,14 +455,14 @@ extension DefaultSyncService {
             return
         }
 
-        if let organizations = response.profile?.organizations {
+        if let effectiveOrganizations = response.profile?.effectiveOrganizations {
             if await !vaultTimeoutService.isLocked(userId: userId) {
                 try await organizationService.initializeOrganizationCrypto(
-                    organizations: organizations.compactMap(Organization.init),
+                    organizations: effectiveOrganizations.compactMap(Organization.init),
                 )
             }
-            try await organizationService.replaceOrganizations(organizations, userId: userId)
-            try await checkTdeUserNeedsToSetPassword(account, organizations)
+            try await organizationService.replaceOrganizations(effectiveOrganizations, userId: userId)
+            try await checkTdeUserNeedsToSetPassword(account, effectiveOrganizations)
         }
 
         if let profile = response.profile {
@@ -451,6 +471,7 @@ extension DefaultSyncService {
         if let masterPasswordUnlock = response.userDecryption?.masterPasswordUnlock {
             await stateService.setAccountMasterPasswordUnlock(masterPasswordUnlock, userId: userId)
         }
+        await stateService.setV2UpgradeToken(response.userDecryption?.v2UpgradeToken, userId: userId)
 
         try await cipherService.replaceCiphers(response.ciphers, userId: userId)
         try await collectionService.replaceCollections(response.collections, userId: userId)
@@ -458,6 +479,7 @@ extension DefaultSyncService {
         try await sendService.replaceSends(response.sends, userId: userId)
         try await settingsService.replaceEquivalentDomains(response.domains, userId: userId)
         try await policyService.replacePolicies(response.policies, userId: userId)
+        try await policyService.replacePoliciesNew(response.policiesNew ?? [], userId: userId)
         try await stateService.setLastSyncTime(timeProvider.presentTime, userId: userId)
         try await stateService.setLastSyncMonotonicTime(timeProvider.monotonicTime, userId: userId)
         try await checkVaultTimeoutPolicy()
@@ -474,6 +496,7 @@ extension DefaultSyncService {
         }
 
         await delegate?.onFetchSyncSucceeded(userId: userId)
+        syncCompleteSubject.send(())
     }
 
     func deleteCipher(data: SyncCipherNotification) async throws {
@@ -636,8 +659,8 @@ extension DefaultSyncService {
         await stateService.updateProfile(from: profile, userId: userId)
         try await stateService.setUsesKeyConnector(profile.usesKeyConnector, userId: userId)
 
-        if let accountEncryptionKeys = AccountEncryptionKeys(responseModel: profile) {
-            try await stateService.setAccountEncryptionKeys(accountEncryptionKeys, userId: userId)
+        if let cryptographicState = WrappedAccountCryptographicState(responseModel: profile) {
+            try await stateService.setAccountCryptographicState(cryptographicState, userId: userId)
         }
     }
 } // swiftlint:disable:this file_length

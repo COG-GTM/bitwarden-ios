@@ -41,9 +41,12 @@ public struct VaultListItem: Equatable, Identifiable, Sendable, VaultItemWithDec
     /// The identifier for the item.
     public let id: String
 
-    /// Whether the user has premium subscription.
+    /// Whether the user has Premium subscription.
     /// This is only used on Archive group for now, so it's not being set for any other occasions.
     public let hasPremium: Bool
+
+    /// Whether the `vfo1-foundation` feature flag is enabled.
+    public var isVfo1FoundationFeatureFlagEnabled = false
 
     /// The type of item being displayed by this item.
     public let itemType: ItemType
@@ -85,9 +88,15 @@ extension VaultListItem {
     /// Initialize a `VaultListItem` from an ID and an `ItemType`.
     /// - Parameters:
     ///   - id: The ID of the item.
+    ///   - isVfo1FoundationFeatureFlagEnabled: Whether the `vfo1-foundation` feature flag is enabled.
     ///   - itemType: The `ItemType` of the item.
-    init(id: String, itemType: ItemType) {
-        self.init(id: id, hasPremium: false, itemType: itemType)
+    init(id: String, isVfo1FoundationFeatureFlagEnabled: Bool = false, itemType: ItemType) {
+        self.init(
+            id: id,
+            hasPremium: false,
+            isVfo1FoundationFeatureFlagEnabled: isVfo1FoundationFeatureFlagEnabled,
+            itemType: itemType,
+        )
     }
 }
 
@@ -135,13 +144,23 @@ extension VaultListItem {
                 SharedAsset.Icons.file24
             case .sshKey:
                 SharedAsset.Icons.key24
+            case .bankAccount:
+                SharedAsset.Icons.bankAccount24
+            case .driversLicense:
+                SharedAsset.Icons.idCard24
+            case .passport:
+                SharedAsset.Icons.idCard24
             }
         case let .group(group, _):
             switch group {
+            case .bankAccount:
+                SharedAsset.Icons.bankAccount24
             case .card:
                 SharedAsset.Icons.card24
             case .collection:
-                SharedAsset.Icons.collections24
+                isVfo1FoundationFeatureFlagEnabled ? SharedAsset.Icons.sharedFolder24 : SharedAsset.Icons.collections24
+            case .driversLicense:
+                SharedAsset.Icons.idCard24
             case .folder,
                  .noFolder:
                 SharedAsset.Icons.folder24
@@ -149,6 +168,8 @@ extension VaultListItem {
                 SharedAsset.Icons.idCard24
             case .login:
                 SharedAsset.Icons.globe24
+            case .passport:
+                SharedAsset.Icons.idCard24
             case .secureNote:
                 SharedAsset.Icons.file24
             case .sshKey:
@@ -180,6 +201,12 @@ extension VaultListItem {
                 "SecureNoteCipherIcon"
             case .sshKey:
                 "SSHKeyCipherIcon"
+            case .bankAccount:
+                "BankAccountCipherIcon"
+            case .driversLicense:
+                "DriverLicenseCipherIcon"
+            case .passport:
+                "PassportCipherIcon"
             }
         default:
             ""
@@ -190,17 +217,40 @@ extension VaultListItem {
     var vaultItemAccessibilityId: String {
         switch itemType {
         case let .group(vaultListGroup, _):
-            if vaultListGroup.isFolder {
-                return "FolderCell"
+            switch vaultListGroup {
+            case .archive:
+                "ArchiveCell"
+            case .trash:
+                "TrashCell"
+            case .collection:
+                "CollectionCell"
+            case .folder:
+                "FolderCell"
+            case .bankAccount:
+                "BankAccountCell"
+            case .card:
+                "CardCell"
+            case .driversLicense:
+                "DriversLicenseCell"
+            case .identity:
+                "IdentityCell"
+            case .login:
+                "LoginCell"
+            case .passport:
+                "PassportCell"
+            case .secureNote:
+                "SecureNoteCell"
+            case .sshKey:
+                "SSHKeyCell"
+            case .totp:
+                "TOTPCell"
+            case .noFolder:
+                "ItemFilterCell"
             }
-            if vaultListGroup.collectionId != nil {
-                return "CollectionCell"
-            }
-            return "ItemFilterCell"
         case .cipher:
-            return "CipherCell"
+            "CipherCell"
         case .totp:
-            return "TOTPCell"
+            "TOTPCell"
         }
     }
 
@@ -247,7 +297,7 @@ extension VaultListItem {
 
     // MARK: Private methods
 
-    /// Whether premium subscription is required
+    /// Whether Premium subscription is required
     /// - Parameters:
     ///   - group: The vault list group to check.
     ///   - count: The count of the group to check.

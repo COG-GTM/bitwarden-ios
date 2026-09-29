@@ -17,7 +17,7 @@ struct VaultAutofillListState: Equatable, Sendable {
     var emptyViewMessage: String = Localizations.noItemsTap
 
     /// The text to be displayed in the button of the empty view.
-    var emptyViewButtonText: String = Localizations.newItem
+    var emptyViewButtonText: String = Localizations.addItem
 
     /// The excluded Fido2 credential id that was found when registering.
     var excludedCredentialIdFound: String?
@@ -39,6 +39,9 @@ struct VaultAutofillListState: Equatable, Sendable {
 
     /// Whether the extension mode is creating a Fido2 credential.
     var isCreatingFido2Credential: Bool = false
+
+    /// Whether the `vfo1-foundation` feature flag is enabled.
+    var isVfo1FoundationFeatureFlagEnabled = false
 
     /// The loading state of the autofill list screen.
     var loadingState: LoadingState<[VaultListSection]> = .loading(nil)

@@ -17,6 +17,13 @@ enum VaultListEffect: Equatable {
     /// The user tapped the dismiss button on the import logins action card.
     case dismissImportLoginsActionCard
 
+    /// The user dismissed the organization user notification banner.
+    ///
+    /// - Parameter fromActionButton: Whether the dismissal came from tapping the banner's primary
+    ///   action button (`true`) rather than the dismiss button (`false`).
+    ///
+    case dismissOrganizationBanner(fromActionButton: Bool)
+
     /// The user tapped the dismiss button on the Premium Upgrade action card.
     case dismissPremiumUpgradeActionCard
 
@@ -52,6 +59,9 @@ enum VaultListEffect: Equatable {
 
     /// Stream the show web icons setting.
     case streamShowWebIcons
+
+    /// Stream sync-complete events to reload the item types the user can create.
+    case streamSyncComplete
 
     /// Stream the vault list for the user.
     case streamVaultList

@@ -18,6 +18,7 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
     var clientService: MockClientService!
     var collectionService: MockCollectionService!
     var configService: MockConfigService!
+    var fillAssistRepository: MockFillAssistRepository!
     var flightRecorder: MockFlightRecorder!
     var folderService: MockFolderService!
     var keyConnectorService: MockKeyConnectorService!
@@ -34,7 +35,7 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
 
     // MARK: Setup & Teardown
 
-    override func setUp() {
+    override func setUp() { // swiftlint:disable:this function_body_length
         super.setUp()
 
         appContextHelper = MockAppContextHelper()
@@ -43,6 +44,7 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
         clientService = MockClientService()
         collectionService = MockCollectionService()
         configService = MockConfigService()
+        fillAssistRepository = MockFillAssistRepository()
         flightRecorder = MockFlightRecorder()
         folderService = MockFolderService()
         keyConnectorService = MockKeyConnectorService()
@@ -73,6 +75,7 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
             clientService: clientService,
             collectionService: collectionService,
             configService: configService,
+            fillAssistRepository: fillAssistRepository,
             flightRecorder: flightRecorder,
             folderService: folderService,
             keyConnectorService: keyConnectorService,
@@ -98,6 +101,7 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
         clientService = nil
         collectionService = nil
         configService = nil
+        fillAssistRepository = nil
         flightRecorder = nil
         folderService = nil
         keyConnectorService = nil
@@ -365,6 +369,31 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
             XCTUnwrap(stateService.lastSyncTimeByUserId["1"]),
             timeProvider.presentTime,
         )
+    }
+
+    /// `fetchSync()` calls `syncRules()` on the fill-assist repository independently of vault sync.
+    func test_fetchSync_syncsFillAssistRules() async throws {
+        client.result = .httpSuccess(testData: .syncWithCiphers)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: false)
+
+        XCTAssertTrue(fillAssistRepository.syncRulesCalled)
+    }
+
+    /// `fetchSync()` calls `syncRules()` even when the vault does not need syncing.
+    func test_fetchSync_syncsFillAssistRules_evenWhenVaultSyncSkipped() async throws {
+        client.result = .httpSuccess(testData: .syncWithCipher)
+        stateService.activeAccount = .fixture()
+        stateService.lastSyncTimeByUserId["1"] = try XCTUnwrap(
+            timeProvider.presentTime.addingTimeInterval(-(Constants.minimumSyncInterval - 1)),
+        )
+        keyConnectorService.userNeedsMigrationResult = .success(false)
+
+        try await subject.fetchSync(forceSync: false, isPeriodic: true)
+
+        XCTAssertTrue(client.requests.isEmpty)
+        XCTAssertTrue(fillAssistRepository.syncRulesCalled)
     }
 
     /// `fetchSync()` with `forceSync: true` performs the sync API request regardless of the
@@ -859,17 +888,15 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
                 culture: "en-US",
                 email: "user@bitwarden.com",
                 id: "c8aa1e36-4427-11ee-be56-0242ac120002",
-                key: "key",
                 organizations: [],
                 privateKey: "private key",
+                providerOrganizations: [],
                 securityStamp: "stamp",
             ),
         )
         XCTAssertEqual(stateService.updateProfileUserId, "1")
         XCTAssertEqual(stateService.usesKeyConnector["1"], false)
-        XCTAssertNil(stateService.accountEncryptionKeys["1"]?.accountKeys)
-        XCTAssertEqual(stateService.accountEncryptionKeys["1"]?.encryptedPrivateKey, "private key")
-        XCTAssertEqual(stateService.accountEncryptionKeys["1"]?.encryptedUserKey, "key")
+        XCTAssertEqual(stateService.accountCryptographicStates["1"], .v1(privateKey: "private key"))
     }
 
     /// `fetchSync()` updates the user's profile when it has account keys.
@@ -886,17 +913,15 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
                 culture: "en-US",
                 email: "user@bitwarden.com",
                 id: "c8aa1e36-4427-11ee-be56-0242ac120002",
-                key: "key",
                 organizations: [],
                 privateKey: "private key",
+                providerOrganizations: [],
                 securityStamp: "stamp",
             ),
         )
         XCTAssertEqual(stateService.updateProfileUserId, "1")
         XCTAssertEqual(stateService.usesKeyConnector["1"], false)
-        XCTAssertEqual(stateService.accountEncryptionKeys["1"]?.accountKeys, .fixtureFilled())
-        XCTAssertEqual(stateService.accountEncryptionKeys["1"]?.encryptedPrivateKey, "WRAPPED_PRIVATE_KEY")
-        XCTAssertEqual(stateService.accountEncryptionKeys["1"]?.encryptedUserKey, "key")
+        XCTAssertEqual(stateService.accountCryptographicStates["1"], .fixtureV2())
     }
 
     /// `fetchSync()` notifies the sync service delegate if the user needs to be migrated to Key
@@ -1135,6 +1160,24 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
                 salt: "user@bitwarden.com",
             ),
         )
+        XCTAssertEqual(
+            stateService.v2UpgradeTokens["1"],
+            V2UpgradeToken(wrappedUserKey1: "WRAPPED_USER_KEY_1", wrappedUserKey2: "WRAPPED_USER_KEY_2"),
+        )
+    }
+
+    /// `fetchSync()` clears the user's V2 upgrade token when the sync response doesn't include one.
+    func test_fetchSync_v2UpgradeToken_absent() async throws {
+        client.result = .httpSuccess(testData: .syncWithProfileOrganizations)
+        stateService.activeAccount = .fixture()
+        stateService.v2UpgradeTokens["1"] = V2UpgradeToken(
+            wrappedUserKey1: "OLD_WRAPPED_USER_KEY_1",
+            wrappedUserKey2: "OLD_WRAPPED_USER_KEY_2",
+        )
+
+        try await subject.fetchSync(forceSync: false)
+
+        XCTAssertNil(stateService.v2UpgradeTokens["1"])
     }
 
     /// `fetchSync()` throws an error if the request fails.
@@ -1146,6 +1189,60 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
             try await subject.fetchSync(forceSync: false)
         }
         XCTAssertNil(syncServiceDelegate.onFetchSyncSucceededCalledWithuserId)
+    }
+
+    /// `fetchSync()` emits on `syncCompletePublisher()` once the sync succeeds.
+    func test_fetchSync_syncCompletePublisher_emitsOnSuccess() async throws {
+        client.result = .httpSuccess(testData: .syncWithCiphers)
+        stateService.activeAccount = .fixture()
+
+        var didSubscribe = false
+        var didEmitAfterSync = false
+        let publisherTask = Task {
+            var iterator = subject.syncCompletePublisher().makeAsyncIterator()
+            _ = await iterator.next() // The subject's initial replayed value, proving subscription is live.
+            didSubscribe = true
+            _ = await iterator.next() // The emission fired at the end of a successful `fetchSync()`.
+            didEmitAfterSync = true
+        }
+        defer { publisherTask.cancel() }
+        try await waitForAsync { didSubscribe }
+
+        try await subject.fetchSync(forceSync: false)
+
+        try await waitForAsync { didEmitAfterSync }
+    }
+
+    /// `fetchSync()` does not emit on `syncCompletePublisher()` if the request fails.
+    func test_fetchSync_syncCompletePublisher_doesNotEmitOnError() async throws {
+        client.result = .httpFailure()
+        stateService.activeAccount = .fixture()
+
+        var didSubscribe = false
+        var didEmit = false
+        let publisherTask = Task {
+            var iterator = subject.syncCompletePublisher().makeAsyncIterator()
+            _ = await iterator.next() // The subject's initial replayed value, proving subscription is live.
+            didSubscribe = true
+            _ = await iterator.next() // Should never resolve, since the sync fails.
+            didEmit = true
+        }
+        defer { publisherTask.cancel() }
+        try await waitForAsync { didSubscribe }
+
+        await assertAsyncThrows {
+            try await subject.fetchSync(forceSync: false)
+        }
+
+        // `fetchSync()` has already thrown by this point, so any `syncCompleteSubject.send(())` call
+        // it would have made already happened synchronously, within that same call, before it
+        // returned — there's no real-time event left to wait out. Yielding gives the scheduler a
+        // chance to run `publisherTask` and observe an already-buffered value, if one incorrectly
+        // exists, without an arbitrary wall-clock delay.
+        for _ in 0 ..< 5 {
+            await Task.yield()
+        }
+        XCTAssertFalse(didEmit)
     }
 
     func test_deleteCipher() async throws {
@@ -1316,6 +1413,137 @@ class SyncServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_
 
         XCTAssertNil(result)
         XCTAssertTrue(cipherService.hasPersonalCiphersCalled)
+    }
+
+    // MARK: - policiesNew independent storage tests
+
+    /// `fetchSync()` stores `policiesNew` via `replacePoliciesNew` and the (empty) legacy `policies`
+    /// via `replacePolicies` independently when only `policiesNew` is present.
+    func test_fetchSync_policiesNew_newOnlyStoredInNewStore() async throws {
+        client.result = .httpSuccess(testData: .syncWithPoliciesNewOnly)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: true)
+
+        XCTAssertTrue(policyService.replacePoliciesPolicies.isEmpty)
+        XCTAssertEqual(policyService.replacePoliciesNewPolicies.map(\.id), ["policy-new-1"])
+    }
+
+    /// `fetchSync()` stores `policiesNew` and `policies` each in their own store when both are present.
+    func test_fetchSync_policiesNew_newAndLegacyStoredIndependently() async throws {
+        client.result = .httpSuccess(testData: .syncWithNewAndLegacyFields)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: true)
+
+        XCTAssertEqual(policyService.replacePoliciesPolicies.map(\.id), ["policy-legacy-1"])
+        XCTAssertEqual(policyService.replacePoliciesNewPolicies.map(\.id), ["policy-new-1"])
+    }
+
+    /// `fetchSync()` stores the legacy `policies` via `replacePolicies` and an empty list via
+    /// `replacePoliciesNew` when `policiesNew` is absent.
+    func test_fetchSync_policiesNew_absentStoresEmptyInNewStore() async throws {
+        client.result = .httpSuccess(testData: .syncWithPolicies)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: true)
+
+        XCTAssertFalse(policyService.replacePoliciesPolicies.isEmpty)
+        XCTAssertEqual(policyService.replacePoliciesPolicies.first?.id, "policy-0")
+        XCTAssertTrue(policyService.replacePoliciesNewPolicies.isEmpty)
+    }
+
+    // MARK: - organizationsNew fallback tests
+
+    /// `fetchSync()` passes `organizationsNew` to `replaceOrganizations` when the field is present,
+    /// ignoring the legacy `profile.organizations`.
+    func test_fetchSync_organizationsNew_newOverridesLegacyOrganizations() async throws {
+        client.result = .httpSuccess(testData: .syncWithOrganizationsNew)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: true)
+
+        XCTAssertEqual(organizationService.replaceOrganizationsOrganizations?.map(\.id), ["org-new-1"])
+    }
+
+    /// `fetchSync()` falls back to `profile.organizations` when `organizationsNew` is absent.
+    func test_fetchSync_organizationsNew_absentFallsBackToProfileOrganizations() async throws {
+        client.result = .httpSuccess(testData: .syncWithProfileOrganizations)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: true)
+
+        // Legacy organizations from profile should be used when organizationsNew is nil.
+        XCTAssertFalse(organizationService.replaceOrganizationsOrganizations?.isEmpty ?? true)
+    }
+
+    /// `fetchSync()` calls `initializeOrganizationCrypto` with the `organizationsNew` data when present.
+    func test_fetchSync_organizationsNew_initializesOrgCryptoWithNewOrgs() async throws {
+        client.result = .httpSuccess(testData: .syncWithOrganizationsNew)
+        stateService.activeAccount = .fixture()
+        // isClientLocked defaults to false (not locked), so crypto init should be called.
+
+        try await subject.fetchSync(forceSync: true)
+
+        XCTAssertTrue(organizationService.initializeOrganizationCryptoWithOrgsCalled)
+    }
+
+    // MARK: - isProviderUser coalescing tests
+
+    /// `fetchSync()` sets `isProviderUser = false` when the org does not appear in `providerOrganizations`.
+    func test_fetchSync_isProviderUser_falseWhenNoProviderRelationship() async throws {
+        client.result = .httpSuccess(testData: .syncWithProfileOrganizations)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: true)
+
+        let replacedOrgs = organizationService.replaceOrganizationsOrganizations ?? []
+        XCTAssertFalse(replacedOrgs.isEmpty)
+        XCTAssertTrue(replacedOrgs.allSatisfy { !$0.isProviderUser })
+    }
+
+    /// `fetchSync()` sets `isProviderUser = true` for any org that also appears in `providerOrganizations`,
+    /// including orgs where the user's member status is accepted (status = 1).
+    func test_fetchSync_isProviderUser_trueForMemberOrgWithProviderRelationship() async throws {
+        client.result = .httpSuccess(testData: .syncWithProviderOrganization)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: true)
+
+        let replacedOrgs = organizationService.replaceOrganizationsOrganizations ?? []
+        XCTAssertEqual(replacedOrgs.count, 2)
+
+        let providerOrg = replacedOrgs.first { $0.id == "org-member-and-provider" }
+        let memberOnlyOrg = replacedOrgs.first { $0.id == "org-member-only" }
+
+        XCTAssertEqual(providerOrg?.isProviderUser, true)
+        XCTAssertEqual(memberOnlyOrg?.isProviderUser, false)
+    }
+
+    /// `fetchSync()` leaves `isProviderUser = false` for orgs not in `providerOrganizations`
+    /// even when other orgs in the same response have a provider relationship.
+    func test_fetchSync_isProviderUser_memberOnlyOrgIsNotMarkedAsProviderUser() async throws {
+        client.result = .httpSuccess(testData: .syncWithProviderOrganization)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: true)
+
+        let replacedOrgs = organizationService.replaceOrganizationsOrganizations ?? []
+        let memberOnlyOrg = replacedOrgs.first { $0.id == "org-member-only" }
+        XCTAssertEqual(memberOnlyOrg?.isProviderUser, false)
+    }
+
+    /// `fetchSync()` does not modify any org when `providerOrganizations` is empty.
+    func test_fetchSync_isProviderUser_emptyProviderOrgListLeavesAllFalse() async throws {
+        // syncWithProfileOrganizations has providerOrganizations: [] on the profile.
+        client.result = .httpSuccess(testData: .syncWithProfileOrganizations)
+        stateService.activeAccount = .fixture()
+
+        try await subject.fetchSync(forceSync: true)
+
+        let replacedOrgs = organizationService.replaceOrganizationsOrganizations ?? []
+        XCTAssertFalse(replacedOrgs.isEmpty)
+        XCTAssertTrue(replacedOrgs.allSatisfy { !$0.isProviderUser })
     }
 }
 

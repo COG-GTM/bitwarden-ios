@@ -38,7 +38,7 @@ private struct MainSendListView: View {
             content
                 .hidden(isSearching)
                 .overlay(alignment: .bottomTrailing) {
-                    if let sendType = store.state.type {
+                    if let sendType = store.state.type ?? store.state.restrictedSendType {
                         addItemFloatingActionButton {
                             await store.perform(.addItemPressed(sendType))
                         }
@@ -74,6 +74,13 @@ private struct MainSendListView: View {
     /// The empty state for this view, displayed when there are no items.
     @ViewBuilder private var empty: some View {
         VStack(spacing: 24) {
+            if store.state.shouldShowUpgradedToPremiumActionCard {
+                UpgradedToPremiumActionCardView(
+                    onDismiss: { await store.perform(.dismissUpgradedToPremiumActionCard) },
+                    onLearnMore: { store.send(.learnMoreAboutPremium) },
+                )
+            }
+
             if store.state.isSendDisabled {
                 InfoContainer(Localizations.sendDisabledWarning)
                     .accessibilityIdentifier("SendPolicyLabel")
@@ -89,7 +96,7 @@ private struct MainSendListView: View {
             ) {
                 Group {
                     let newSendLabel = Label(Localizations.newSend, image: SharedAsset.Icons.plus16.swiftUIImage)
-                    if let sendType = store.state.type {
+                    if let sendType = store.state.type ?? store.state.restrictedSendType {
                         AsyncButton {
                             await store.perform(.addItemPressed(sendType))
                         } label: {
@@ -150,6 +157,13 @@ private struct MainSendListView: View {
     @ViewBuilder
     private func list(sections: [SendListSection]) -> some View {
         VStack(alignment: .leading, spacing: 16) {
+            if store.state.shouldShowUpgradedToPremiumActionCard {
+                UpgradedToPremiumActionCardView(
+                    onDismiss: { await store.perform(.dismissUpgradedToPremiumActionCard) },
+                    onLearnMore: { store.send(.learnMoreAboutPremium) },
+                )
+            }
+
             if store.state.isSendDisabled {
                 InfoContainer(Localizations.sendDisabledWarning)
             }
@@ -264,8 +278,9 @@ struct SendListView: View {
                 ),
                 additionalBottomPadding: FloatingActionButton.bottomOffsetPadding,
             )
+            .task { await store.perform(.appeared) }
             .task { await store.perform(.loadData) }
-            .task { await store.perform(.streamSendList) }
+            .task(id: store.state.restrictedSendType) { await store.perform(.streamSendList) }
             .searchDebouncedTask(id: store.state.searchText) {
                 await store.perform(.search(store.state.searchText))
             }
@@ -273,6 +288,11 @@ struct SendListView: View {
                 guard let url = newValue else { return }
                 openURL(url)
                 store.send(.clearInfoUrl)
+            }
+            .onChange(of: store.state.url) { newValue in
+                guard let url = newValue else { return }
+                openURL(url)
+                store.send(.clearUrl)
             }
     }
 }

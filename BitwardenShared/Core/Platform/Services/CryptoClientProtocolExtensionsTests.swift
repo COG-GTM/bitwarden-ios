@@ -1,4 +1,5 @@
 import BitwardenSdk
+import BitwardenSdkMocks
 import XCTest
 
 @testable import BitwardenShared
@@ -7,14 +8,14 @@ import XCTest
 class CryptoClientProtocolExtensionsTests: BitwardenTestCase {
     // MARK: Properties
 
-    var subject: MockCryptoClient!
+    var subject: MockCryptoClientProtocol!
 
     // MARK: Setup & Teardown
 
     override func setUp() {
         super.setUp()
 
-        subject = MockCryptoClient()
+        subject = MockCryptoClientProtocol()
     }
 
     override func tearDown() {
@@ -25,16 +26,12 @@ class CryptoClientProtocolExtensionsTests: BitwardenTestCase {
 
     // MARK: Tests
 
-    // `initializeUserCrypto(account:encryptionKeys:method:)` initializes the user crypto using a
+    // `initializeUserCrypto(account:cryptographicState:method:)` initializes the user crypto using a
     // user's master password.
     func test_initializeUserCrypto_masterPassword() async throws {
         try await subject.initializeUserCrypto(
             account: .fixture(),
-            encryptionKeys: AccountEncryptionKeys(
-                accountKeys: .fixtureFilled(),
-                encryptedPrivateKey: "PRIVATE_KEY",
-                encryptedUserKey: "encryptedUserKey",
-            ),
+            cryptographicState: .fixtureV2(),
             method: .masterPasswordUnlock(
                 password: "password123",
                 masterPasswordUnlock: MasterPasswordUnlockData(
@@ -43,9 +40,10 @@ class CryptoClientProtocolExtensionsTests: BitwardenTestCase {
                     salt: "SALT",
                 ),
             ),
+            upgradeToken: nil,
         )
 
-        let request = try XCTUnwrap(subject.initializeUserCryptoRequest)
+        let request = try XCTUnwrap(subject.initializeUserCryptoReceivedReq)
         XCTAssertEqual(request.userId, "1")
         XCTAssertEqual(request.kdfParams, .pbkdf2(iterations: 600_000))
         XCTAssertEqual(request.email, "user@bitwarden.com")
@@ -73,24 +71,22 @@ class CryptoClientProtocolExtensionsTests: BitwardenTestCase {
         XCTAssertEqual(securityState, "SECURITY_STATE")
     }
 
-    // `initializeUserCrypto(account:encryptionKeys:method:)` initializes the user crypto using a
+    // `initializeUserCrypto(account:cryptographicState:method:)` initializes the user crypto using a
     // user's PIN.
     func test_initializeUserCrypto_pin() async throws {
         try await subject.initializeUserCrypto(
             account: .fixture(),
-            encryptionKeys: AccountEncryptionKeys(
-                accountKeys: .fixtureFilled(),
-                encryptedPrivateKey: "PRIVATE_KEY",
-                encryptedUserKey: "encryptedUserKey",
-            ),
+            cryptographicState: .fixtureV2(),
             method: .pin(pin: "1234", pinProtectedUserKey: "pinProtectedUserKey"),
+            upgradeToken: nil,
         )
 
-        let request = try XCTUnwrap(subject.initializeUserCryptoRequest)
+        let request = try XCTUnwrap(subject.initializeUserCryptoReceivedReq)
         XCTAssertEqual(request.userId, "1")
         XCTAssertEqual(request.kdfParams, .pbkdf2(iterations: 600_000))
         XCTAssertEqual(request.email, "user@bitwarden.com")
         XCTAssertEqual(request.method, .pin(pin: "1234", pinProtectedUserKey: "pinProtectedUserKey"))
+        XCTAssertNil(request.upgradeToken)
 
         guard case let .v2(privateKey, signedPublicKey, signingKey, securityState) = request.accountCryptographicState
         else {
@@ -101,5 +97,21 @@ class CryptoClientProtocolExtensionsTests: BitwardenTestCase {
         XCTAssertEqual(signedPublicKey, "SIGNED_PUBLIC_KEY")
         XCTAssertEqual(signingKey, "WRAPPED_SIGNING_KEY")
         XCTAssertEqual(securityState, "SECURITY_STATE")
+    }
+
+    // `initializeUserCrypto(account:encryptionKeys:method:upgradeToken:)` forwards the upgrade
+    // token to the request when one is provided.
+    func test_initializeUserCrypto_upgradeToken() async throws {
+        let upgradeToken = V2UpgradeToken(wrappedUserKey1: "WRAPPED_USER_KEY_1", wrappedUserKey2: "WRAPPED_USER_KEY_2")
+
+        try await subject.initializeUserCrypto(
+            account: .fixture(),
+            cryptographicState: .fixtureV2(),
+            method: .pin(pin: "1234", pinProtectedUserKey: "pinProtectedUserKey"),
+            upgradeToken: upgradeToken,
+        )
+
+        let request = try XCTUnwrap(subject.initializeUserCryptoReceivedReq)
+        XCTAssertEqual(request.upgradeToken, upgradeToken)
     }
 }

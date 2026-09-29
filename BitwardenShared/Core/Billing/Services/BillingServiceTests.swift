@@ -16,6 +16,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
     // MARK: Properties
 
     var billingAPIService: MockBillingAPIService!
+    var billingStateService: MockBillingStateService!
     var configService: MockConfigService!
     var environmentService: MockEnvironmentService!
     var errorReporter: MockErrorReporter!
@@ -27,6 +28,10 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
 
     init() {
         billingAPIService = MockBillingAPIService()
+        billingAPIService.getSubscriptionReturnValue = .fixture()
+        billingStateService = MockBillingStateService()
+        billingStateService.getSubscriptionAttentionCardVisibleReturnValue = false
+        billingStateService.getUpgradedToPremiumActionCardVisibleReturnValue = false
         configService = MockConfigService()
         configService.featureFlagsBool[.premiumUpgradePath] = true
         environmentService = MockEnvironmentService()
@@ -36,12 +41,13 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         syncService = MockSyncService()
         subject = DefaultBillingService(
             billingAPIService: billingAPIService,
+            billingStateService: billingStateService,
             configService: configService,
-            debounceInterval: .milliseconds(100),
             environmentService: environmentService,
             errorReporter: errorReporter,
             stateService: stateService,
             syncService: syncService,
+            debounceInterval: .milliseconds(100),
         )
     }
 
@@ -128,7 +134,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         #expect(billingAPIService.getPortalUrlCallsCount == 1)
     }
 
-    /// `getPremiumPlan()` returns the premium plan from the API service.
+    /// `getPremiumPlan()` returns the Premium plan from the API service.
     @Test
     func getPremiumPlan_success() async throws {
         let expectedPlan = PremiumPlanResponseModel(
@@ -269,7 +275,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         #expect(result.nextCharge != nil)
     }
 
-    /// `getSubscription()` maps unpaid status to updatePayment.
+    /// `getSubscription()` maps unpaid status to its own `.unpaid` plan status.
     @Test
     func getSubscription_unpaid() async throws {
         billingAPIService.getSubscriptionReturnValue = .fixture(
@@ -279,7 +285,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
 
         let result = try await subject.getSubscription()
 
-        #expect(result.status == .updatePayment)
+        #expect(result.status == .unpaid)
         #expect(result.cancelAt != nil)
     }
 
@@ -289,6 +295,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         var statuses = [PremiumCheckoutStatus]()
         let cancellable = subject.premiumCheckoutStatusPublisher()
             .sink { statuses.append($0) }
+        defer { cancellable.cancel() }
 
         subject.premiumCheckoutCanceled()
 
@@ -299,6 +306,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         var lateStatuses = [PremiumCheckoutStatus]()
         let lateCancellable = subject.premiumCheckoutStatusPublisher()
             .sink { lateStatuses.append($0) }
+        defer { lateCancellable.cancel() }
         try await waitForAsync { lateStatuses.isEmpty }
     }
 
@@ -325,13 +333,14 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         _ = lateCancellable
     }
 
-    /// `premiumStatusChanged()` returns early without syncing when the user already has premium.
+    /// `premiumStatusChanged()` returns early without syncing when the user already has Premium.
     @Test
     func premiumStatusChanged_alreadyHasPremium() async throws {
         stateService.doesActiveAccountHavePremiumResult = true
         var statuses = [PremiumCheckoutStatus]()
         let cancellable = subject.premiumCheckoutStatusPublisher()
             .sink { statuses.append($0) }
+        defer { cancellable.cancel() }
 
         await subject.premiumStatusChanged()
 
@@ -339,10 +348,10 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         #expect(!syncService.didFetchSync)
     }
 
-    /// `premiumStatusChanged()` publishes `.confirmed` when the user gains premium after sync.
+    /// `premiumStatusChanged()` publishes `.confirmed` when the user gains Premium after sync.
     @Test
     func premiumStatusChanged_confirmed() async throws {
-        // Start as non-premium so the guard passes, then switch to premium after sync.
+        // Start as non-Premium so the guard passes, then switch to Premium after sync.
         stateService.doesActiveAccountHavePremiumResult = false
         syncService.fetchSyncHandler = {
             stateService.doesActiveAccountHavePremiumResult = true
@@ -350,6 +359,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         var statuses = [PremiumCheckoutStatus]()
         let cancellable = subject.premiumCheckoutStatusPublisher()
             .sink { statuses.append($0) }
+        defer { cancellable.cancel() }
 
         await subject.premiumStatusChanged()
 
@@ -371,6 +381,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         var earlyStatuses = [PremiumCheckoutStatus]()
         let earlyCancellable = subject.premiumCheckoutStatusPublisher()
             .sink { earlyStatuses.append($0) }
+        defer { earlyCancellable.cancel() }
 
         await subject.premiumStatusChanged()
         try await waitForAsync { !earlyStatuses.isEmpty }
@@ -379,6 +390,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         var lateStatuses = [PremiumCheckoutStatus]()
         let lateCancellable = subject.premiumCheckoutStatusPublisher()
             .sink { lateStatuses.append($0) }
+        defer { lateCancellable.cancel() }
 
         try await waitForAsync { lateStatuses.isEmpty }
     }
@@ -391,6 +403,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         var statuses = [PremiumCheckoutStatus]()
         let cancellable = subject.premiumCheckoutStatusPublisher()
             .sink { statuses.append($0) }
+        defer { cancellable.cancel() }
 
         await subject.premiumStatusChanged()
 
@@ -398,13 +411,14 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         #expect(!syncService.didFetchSync)
     }
 
-    /// `premiumStatusChanged()` publishes `.pending` when the user does not have premium after sync.
+    /// `premiumStatusChanged()` publishes `.pending` when the user does not have Premium after sync.
     @Test
     func premiumStatusChanged_pending() async throws {
         stateService.doesActiveAccountHavePremiumResult = false
         var statuses = [PremiumCheckoutStatus]()
         let cancellable = subject.premiumCheckoutStatusPublisher()
             .sink { statuses.append($0) }
+        defer { cancellable.cancel() }
 
         await subject.premiumStatusChanged()
 
@@ -445,6 +459,29 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         #expect(result == false)
     }
 
+    /// `isSelfHosted()` returns `true` for the internal QA region (any `bitwarden.pw` host) when
+    /// the debug flag is off, matching how `.internal` is treated as self-hosted elsewhere.
+    @Test
+    func isSelfHosted_internalRegion_debugFlagOff_returnsTrue() async {
+        environmentService.region = .internal
+        configService.featureFlagsBool[.debugDisableSelfHostPremiumCheck] = false
+
+        let result = await subject.isSelfHosted()
+
+        #expect(result == true)
+    }
+
+    /// `isSelfHosted()` returns `false` for the internal QA region when the debug override flag is enabled.
+    @Test
+    func isSelfHosted_internalRegion_debugFlagOn_returnsFalse() async {
+        environmentService.region = .internal
+        configService.featureFlagsBool[.debugDisableSelfHostPremiumCheck] = true
+
+        let result = await subject.isSelfHosted()
+
+        #expect(result == false)
+    }
+
     /// `premiumStatusChanged()` returns early without syncing when the environment is self-hosted.
     @Test
     func premiumStatusChanged_selfHosted() async throws {
@@ -453,6 +490,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         var statuses = [PremiumCheckoutStatus]()
         let cancellable = subject.premiumCheckoutStatusPublisher()
             .sink { statuses.append($0) }
+        defer { cancellable.cancel() }
 
         await subject.premiumStatusChanged()
 
@@ -469,6 +507,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         var statuses = [PremiumCheckoutStatus]()
         let cancellable = subject.premiumCheckoutStatusPublisher()
             .sink { statuses.append($0) }
+        defer { cancellable.cancel() }
 
         await subject.premiumStatusChanged()
 
@@ -484,6 +523,7 @@ struct BillingServiceTests { // swiftlint:disable:this type_body_length
         var statuses = [PremiumCheckoutStatus]()
         let cancellable = subject.premiumCheckoutStatusPublisher()
             .sink { statuses.append($0) }
+        defer { cancellable.cancel() }
 
         await subject.premiumStatusChanged()
 

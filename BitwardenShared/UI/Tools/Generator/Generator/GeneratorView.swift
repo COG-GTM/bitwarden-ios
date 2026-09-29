@@ -42,6 +42,11 @@ struct GeneratorView: View { // swiftlint:disable:this type_body_length
                 get: \.toast,
                 send: GeneratorAction.toastShown,
             ))
+            .onChange(of: store.state.url) { newValue in
+                guard let url = newValue else { return }
+                openURL(url)
+                store.send(.clearUrl)
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if store.state.presentationMode.isDismissButtonVisible {
@@ -57,13 +62,6 @@ struct GeneratorView: View { // swiftlint:disable:this type_body_length
                 )
 
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    if store.state.presentationMode.isSelectButtonVisible {
-                        toolbarButton(Localizations.select) {
-                            store.send(.selectButtonPressed)
-                        }
-                        .accessibilityIdentifier("SelectButton")
-                    }
-
                     if store.state.presentationMode.isOptionsButtonVisible {
                         optionsToolbarMenu {
                             Button(Localizations.passwordHistory) {
@@ -81,6 +79,16 @@ struct GeneratorView: View { // swiftlint:disable:this type_body_length
                 }
             }
         }
+    }
+
+    /// The full-width button that fills the generated value
+    /// into the field the user came from, when presented in place.
+    @ViewBuilder var fillButton: some View {
+        Button(store.state.generatorType.fillButtonTitle) {
+            store.send(.fillGeneratedValue)
+        }
+        .buttonStyle(.primary())
+        .accessibilityIdentifier("FillGeneratedValueButton")
     }
 
     @ViewBuilder
@@ -128,6 +136,13 @@ struct GeneratorView: View { // swiftlint:disable:this type_body_length
             ),
         ) {
             VStack(alignment: .leading, spacing: 24) {
+                if store.state.shouldShowUpgradedToPremiumActionCard {
+                    UpgradedToPremiumActionCardView(
+                        onDismiss: { await store.perform(.dismissUpgradedToPremiumActionCard) },
+                        onLearnMore: { store.send(.learnMoreAboutPremium) },
+                    )
+                }
+
                 if store.state.isLearnGeneratorActionCardEligible,
                    store.state.presentationMode == .tab {
                     ActionCard(
@@ -282,7 +297,7 @@ struct GeneratorView: View { // swiftlint:disable:this type_body_length
         } accessoryContent: {
             AccessoryButton(
                 asset: SharedAsset.Icons.generate24,
-                accessibilityLabel: Localizations.generatePassword,
+                accessibilityLabel: store.state.generatorType.regenerateButtonAccessibilityLabel,
                 accessibilityIdentifier: "RegenerateValueButton",
             ) {
                 store.send(.refreshGeneratedValue)
@@ -295,14 +310,30 @@ struct GeneratorView: View { // swiftlint:disable:this type_body_length
                     )),
                 )
             }
+
+            if store.state.presentationMode.isCopyIconButtonVisible {
+                AccessoryButton(
+                    asset: SharedAsset.Icons.copy24,
+                    accessibilityLabel: store.state.generatorType.copyButtonAccessibilityLabel,
+                    accessibilityIdentifier: "CopyValueIconButton",
+                ) {
+                    store.send(.copyGeneratedValue)
+                }
+            }
         }
 
-        Button(Localizations.copy) {
-            store.send(.copyGeneratedValue)
+        if store.state.presentationMode.isFillButtonVisible {
+            fillButton
         }
-        .buttonStyle(.primary())
-        .accessibilityIdentifier("CopyValueButton")
-        .accessibilityLabel(Localizations.copyPassword)
+
+        if store.state.presentationMode.isCopyButtonVisible {
+            Button(Localizations.copy) {
+                store.send(.copyGeneratedValue)
+            }
+            .buttonStyle(.primary())
+            .accessibilityIdentifier("CopyValueButton")
+            .accessibilityLabel(store.state.generatorType.copyButtonAccessibilityLabel)
+        }
     }
 
     /// Returns a view for displaying a menu for selecting the username type

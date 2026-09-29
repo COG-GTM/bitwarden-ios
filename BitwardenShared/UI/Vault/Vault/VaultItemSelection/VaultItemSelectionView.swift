@@ -160,7 +160,7 @@ private struct VaultItemSelectionSearchableView: View {
                     store.send(.addTapped)
                 } label: {
                     Label {
-                        Text(Localizations.newItem)
+                        Text(Localizations.addItem)
                     } icon: {
                         SharedAsset.Icons.plus16.swiftUIImage
                             .imageStyle(.accessoryIcon16(
@@ -227,6 +227,7 @@ private struct VaultItemSelectionSearchableView: View {
                     state: { state in
                         VaultListItemRowState(
                             iconBaseURL: state.iconBaseURL,
+                            isVfo1FoundationFeatureFlagEnabled: state.isVfo1FoundationFeatureFlagEnabled,
                             item: item,
                             hasDivider: hasDivider,
                             showWebIcons: state.showWebIcons,

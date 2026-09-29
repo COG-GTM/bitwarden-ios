@@ -6,6 +6,8 @@ import Combine
 import Foundation
 import OSLog
 
+// swiftlint:disable file_length
+
 // MARK: - MasterPasswordUpdateDelegate
 
 /// A delegate protocol for handling master password updates during registration completion.
@@ -43,7 +45,7 @@ enum CompleteRegistrationError: Error {
 
 /// The processor used to manage state and handle actions for the complete registration screen.
 ///
-class CompleteRegistrationProcessor: StateProcessor<
+class CompleteRegistrationProcessor: StateProcessor<// swiftlint:disable:this type_body_length
     CompleteRegistrationState,
     CompleteRegistrationAction,
     CompleteRegistrationEffect,
@@ -54,6 +56,7 @@ class CompleteRegistrationProcessor: StateProcessor<
         & HasAuthRepository
         & HasAuthService
         & HasClientService
+        & HasConfigService
         & HasEnvironmentService
         & HasErrorReporter
         & HasStateService
@@ -178,36 +181,72 @@ class CompleteRegistrationProcessor: StateProcessor<
     }
 
     /// Performs an API request to create the user's account.
-    private func createAccount() async throws {
-        let kdfConfig = KdfConfig.defaultKdfConfig
+    private func createAccount() async throws { // swiftlint:disable:this function_body_length
+        guard await services.configService.getFeatureFlag(
+            .accountEncryptionV2PasswordRegistration,
+            isPreAuth: true,
+        ) else {
+            // V1 path — to be removed with FeatureFlag.accountEncryptionV2PasswordRegistration
+            let kdfConfig = KdfConfig.defaultKdfConfig
 
-        let keys = try await services.clientService.auth(isPreAuth: true).makeRegisterKeys(
-            email: state.userEmail,
-            password: state.passwordText,
-            kdf: kdfConfig.sdkKdf,
-        )
-
-        let hashedPassword = try await services.clientService.auth(isPreAuth: true).hashPassword(
-            email: state.userEmail,
-            password: state.passwordText,
-            kdfParams: kdfConfig.sdkKdf,
-            purpose: .serverAuthorization,
-        )
-
-        _ = try await services.accountAPIService.registerFinish(
-            body: RegisterFinishRequestModel(
+            let keys = try await services.clientService.auth(isPreAuth: true).makeRegisterKeys(
                 email: state.userEmail,
-                emailVerificationToken: state.emailVerificationToken,
-                kdfConfig: kdfConfig,
-                masterPasswordHash: hashedPassword,
-                masterPasswordHint: state.passwordHintText,
-                userSymmetricKey: keys.encryptedUserKey,
-                userAsymmetricKeys: KeysRequestModel(
-                    encryptedPrivateKey: keys.keys.private,
-                    publicKey: keys.keys.public,
+                password: state.passwordText,
+                kdf: kdfConfig.sdkKdf,
+            )
+
+            let hashedPassword = try await services.clientService.auth(isPreAuth: true).hashPassword(
+                email: state.userEmail,
+                password: state.passwordText,
+                kdfParams: kdfConfig.sdkKdf,
+                purpose: .serverAuthorization,
+            )
+
+            _ = try await services.accountAPIService.registerFinish(
+                body: RegisterFinishRequestModel(
+                    email: state.userEmail,
+                    emailVerificationToken: state.emailVerificationToken,
+                    masterPasswordAuthentication: MasterPasswordAuthenticationDataRequestModel(
+                        kdf: kdfConfig,
+                        masterPasswordAuthenticationHash: hashedPassword,
+                        salt: state.userEmail,
+                    ),
+                    masterPasswordHint: state.passwordHintText,
+                    masterPasswordUnlock: MasterPasswordUnlockDataRequestModel(
+                        kdf: kdfConfig,
+                        masterKeyWrappedUserKey: keys.encryptedUserKey,
+                        salt: state.userEmail,
+                    ),
+                    userAsymmetricKeys: KeysRequestModel(
+                        encryptedPrivateKey: keys.keys.private,
+                        publicKey: keys.keys.public,
+                    ),
                 ),
-            ),
-        )
+            )
+            state.didCreateAccount = true
+            return
+        }
+
+        _ = try await services.clientService.auth(isPreAuth: true)
+            .registration()
+            .postKeysForUserPasswordRegistration(
+                request: UserMasterPasswordRegistrationRequest(
+                    email: state.userEmail,
+                    salt: state.userEmail,
+                    masterPassword: state.passwordText,
+                    masterPasswordHint: state.passwordHintText.nilIfEmpty,
+                    emailVerificationToken: state.emailVerificationToken,
+                    salesAssistedToken: nil,
+                    organizationUserId: nil,
+                    orgInviteToken: nil,
+                    orgSponsoredFreeFamilyPlanToken: nil,
+                    acceptEmergencyAccessInviteToken: nil,
+                    acceptEmergencyAccessId: nil,
+                    providerInviteToken: nil,
+                    providerUserId: nil,
+                    openOrgInvite: nil,
+                ),
+            )
 
         state.didCreateAccount = true
     }

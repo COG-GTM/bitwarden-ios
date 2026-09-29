@@ -91,6 +91,7 @@ final class VaultCoordinator: Coordinator, HasStackNavigator { // swiftlint:disa
         & HasFlightRecorder
         & HasFido2CredentialStore
         & HasFido2UserInterfaceHelper
+        & HasFillAssistRepository
         & HasLocalAuthService
         & HasNotificationService
         & HasReviewPromptService
@@ -204,7 +205,7 @@ final class VaultCoordinator: Coordinator, HasStackNavigator { // swiftlint:disa
         case .addAccount:
             delegate?.didTapAddAccount()
         case .addFolder:
-            showAddFolder()
+            showAddFolder(delegate: context as? AddEditFolderDelegate)
         case let .addItem(group, newCipherOptions, organizationId, type):
             Task {
                 let hasPremium = await services.vaultRepository.doesActiveAccountHavePremium()
@@ -264,6 +265,8 @@ final class VaultCoordinator: Coordinator, HasStackNavigator { // swiftlint:disa
             showList()
         case let .loginRequest(loginRequest):
             delegate?.presentLoginRequest(loginRequest)
+        case .premiumPlan:
+            delegate?.switchToSettingsTab(route: .premiumPlan(nil))
         case .premiumUpgrade:
             showPremiumUpgrade()
         case let .vaultItemSelection(totpKeyModel):
@@ -291,11 +294,14 @@ final class VaultCoordinator: Coordinator, HasStackNavigator { // swiftlint:disa
 
     /// Shows the add folder screen.
     ///
-    private func showAddFolder() {
+    /// - Parameter delegate: A `AddEditFolderDelegate` that is notified when the user makes a
+    ///     change to folders.
+    ///
+    private func showAddFolder(delegate: AddEditFolderDelegate?) {
         let navigationController = module.makeNavigationController()
         let coordinator = module.makeAddEditFolderCoordinator(stackNavigator: navigationController)
         coordinator.start()
-        coordinator.navigate(to: .addEditFolder(folder: nil))
+        coordinator.navigate(to: .addEditFolder(folder: nil), context: delegate)
 
         stackNavigator?.present(navigationController)
     }
@@ -311,7 +317,10 @@ final class VaultCoordinator: Coordinator, HasStackNavigator { // swiftlint:disa
                 iconBaseURL: services.environmentService.iconsURL,
             ),
         )
-        let view = VaultAutofillListView(store: Store(processor: processor), timeProvider: services.timeProvider)
+        let view = VaultAutofillListView(
+            store: Store(processor: processor),
+            timeProvider: services.timeProvider,
+        )
         stackNavigator?.replace(view)
     }
 
@@ -416,7 +425,7 @@ final class VaultCoordinator: Coordinator, HasStackNavigator { // swiftlint:disa
         stackNavigator?.present(navigationController)
     }
 
-    /// Shows the premium upgrade screen.
+    /// Shows the Premium upgrade screen.
     ///
     private func showPremiumUpgrade() {
         let navigationController = module.makeNavigationController()

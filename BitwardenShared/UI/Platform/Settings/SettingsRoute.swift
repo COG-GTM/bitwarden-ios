@@ -68,6 +68,9 @@ public enum SettingsRoute: Equatable, Hashable {
     /// A route to the other view.
     case other
 
+    /// A route to the password health screen.
+    case passwordHealth
+
     /// A route to the password auto-fill screen.
     case passwordAutoFill
 

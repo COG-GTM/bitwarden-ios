@@ -18,6 +18,19 @@
 
 Please refer to the [iOS section](https://contributing.bitwarden.com/getting-started/mobile/ios/) of the [Contributing Documentation](https://contributing.bitwarden.com/) for build instructions, recommended tooling, code style tips, and lots of other great information to get you started.
 
+## Build an installable simulator app
+
+No Apple signing credentials are needed to build and run the apps on the iOS Simulator:
+
+```bash
+brew install mint && mint bootstrap
+./Scripts/build-simulator-app.sh                       # Password Manager -> build/Bitwarden-Simulator.zip
+./Scripts/build-simulator-app.sh --app Authenticator   # Authenticator -> build/Authenticator-Simulator.zip
+./Scripts/build-simulator-app.sh --install --device "iPhone 17 Pro"  # also install and launch it
+```
+
+To install a downloaded zip (also available from the **Build / Simulator App** workflow's artifacts), unzip it and run `xcrun simctl install booted Bitwarden.app`. Building for physical devices or TestFlight requires your own Apple team and provisioning profiles; see `Configs/Common-bwpm.xcconfig`.
+
 ## Related projects:
 
 - [bitwarden/server](https://github.com/bitwarden/server): The core infrastructure backend (API, database, Docker, etc).

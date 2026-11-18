@@ -23,7 +23,7 @@ Please refer to the [iOS section](https://contributing.bitwarden.com/getting-sta
 No Apple signing credentials are needed to build and run the apps on the iOS Simulator:
 
 ```bash
-brew install mint && mint bootstrap
+brew bundle && mint bootstrap
 ./Scripts/build-simulator-app.sh                       # Password Manager -> build/Bitwarden-Simulator.zip
 ./Scripts/build-simulator-app.sh --app Authenticator   # Authenticator -> build/Authenticator-Simulator.zip
 ./Scripts/build-simulator-app.sh --install --device "iPhone 17 Pro"  # also install and launch it

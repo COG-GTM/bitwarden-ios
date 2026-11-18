@@ -35,7 +35,7 @@ while [ $# -gt 0 ]; do
     --destination) DESTINATION="$2"; shift 2 ;;
     --install) INSTALL=true; shift ;;
     --device) DEVICE="$2"; shift 2 ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,20p' "${script_dir}/$(basename "${BASH_SOURCE[0]}")"; exit 0 ;;
     *) echo >&2 "Unknown argument: $1"; exit 1 ;;
   esac
 done
